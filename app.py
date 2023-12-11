@@ -23,6 +23,9 @@ from langchain.cache import RedisSemanticCache, SQLAlchemyCache
 from langchain.globals import set_llm_cache
 from sqlalchemy import create_engine
 
+import psycopg2
+from psycopg2 import sql
+
 app = Flask(__name__) # Initialize Flask App
 
 # app.template_folder = os.path.join('..', 'templates') # Reference templates folder in parent directory
@@ -53,7 +56,7 @@ sql_llm = HuggingFacePipeline.from_model_id(
     pipeline_kwargs={"max_new_tokens": 30},
 )
 
-conn_url = os.environ['conn_url']
+# conn_url = os.environ['conn_url']
 # redis_url = os.environ['redis_url']
 
 # r = get_redis_connection(redis_url) # Initialize redis connection
@@ -214,19 +217,52 @@ def chatbot():
         }}
     
 
-# @app.route('/delete', methods=['POST'])
-# def delete_redis():
-#     tenant_name = request.form["tenant_name"]
-#     module_flag = request.form["module_flag"]
-#     socmed_type = request.form["socmed_type"]
+@app.route('/delete', methods=['POST'])
+def delete_cache():
+    # tenant_name = request.form["tenant_name"]
+    # module_flag = request.form["module_flag"]
+    # socmed_type = request.form["socmed_type"]
 
-#     naming = f"{module_flag}_{tenant_name}_{socmed_type}"
+    # naming = f"{module_flag}_{tenant_name}_{socmed_type}"
 
-#     r.delete(naming)
-#     return {
-#         "status" : 200, "data" : {
-#         "response":"redis cache has been successfully deleted"
-#     }}
+    # r.delete(naming)
+
+    cur = conn.cursor()
+
+    # Establish a connection to the PostgreSQL database
+    cursor = conn.cursor()
+
+    # Dynamic SQL to drop tables
+    drop_tables_query = """
+        DO $$ 
+        DECLARE
+            table_name text;
+        BEGIN
+            FOR table_name IN (SELECT table_name FROM information_schema.tables WHERE table_name LIKE %s AND table_schema = 'public') 
+            LOOP
+                EXECUTE 'DROP TABLE IF EXISTS ' || table_name || ' CASCADE';
+            END LOOP;
+        END $$;
+    """
+
+    # Define the pattern for table names
+    table_name_pattern = '%_cache%'
+
+    # Execute the dynamic SQL query
+    cursor.execute(drop_tables_query, (table_name_pattern,))
+
+    # Commit the changes
+    conn.commit()
+
+    # Close the cursor and connection
+    cursor.close()
+    # connection.close()
+
+
+    return {
+        "status" : 200, "data" : {
+        "response":"redis cache has been successfully deleted"
+    }}
 
 
 @app.route('/')
