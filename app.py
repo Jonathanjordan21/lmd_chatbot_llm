@@ -122,6 +122,7 @@ def update_knowledge():
         #     df_binary = pickle.dumps(new_df) # create pickle binary dataframe
 
         # r.set(naming, df_binary) # set redis pickle dataframe to redis cache 
+        set_llm_cache(SQLAlchemyCache(engine))
         print("Success Embedded data!")
         
         # conn.close()
@@ -136,6 +137,7 @@ def update_knowledge():
 def chatbot():
     global r
     global conn
+    set_llm_cache(SQLAlchemyCache(engine))
 
     if request.method == 'POST':
         query = request.form["query"] # User input 
@@ -236,11 +238,11 @@ def delete_cache():
     drop_tables_query = """
         DO $$ 
         DECLARE
-            table_name text;
+            table_name_var text;
         BEGIN
-            FOR table_name IN (SELECT table_name FROM information_schema.tables WHERE table_name LIKE %s AND table_schema = 'public') 
+            FOR table_name_var IN (SELECT table_name FROM information_schema.tables WHERE table_name LIKE %s AND table_schema = 'public') 
             LOOP
-                EXECUTE 'DROP TABLE IF EXISTS ' || table_name || ' CASCADE';
+                EXECUTE 'DROP TABLE IF EXISTS ' || table_name_var || ' CASCADE';
             END LOOP;
         END $$;
     """
