@@ -53,19 +53,6 @@ sql_llm = HuggingFacePipeline.from_model_id(
     pipeline_kwargs={"max_new_tokens": 30},
 )
 
-
-def set_env_var():
-
-    #Elephant SQL postgre server
-    os.environ['conn_url'] = "postgresql://wdpvftju:uoOA333yqjhTp2lzFWpelAhhyAMv6qaA@berry.db.elephantsql.com/wdpvftju"
-    # Redis Upstash connection
-    os.environ['redis_url'] = 'redis://default:fe62b6f869b9426f802d08cc5540810b@us1-helped-baboon-39634.upstash.io:39634'
-
-
-os.environ['conn_url'] = "postgresql://wdpvftju:uoOA333yqjhTp2lzFWpelAhhyAMv6qaA@berry.db.elephantsql.com/wdpvftju"
-# Redis Upstash connection
-os.environ['redis_url'] = 'redis://default:fe62b6f869b9426f802d08cc5540810b@us1-helped-baboon-39634.upstash.io:39634'
-
 conn_url = os.environ['conn_url']
 # redis_url = os.environ['redis_url']
 
