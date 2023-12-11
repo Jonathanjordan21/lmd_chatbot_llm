@@ -9,7 +9,7 @@ docker-compose up
 
 Install python packages and run Flask App
 ```bash
-pip install -r requirements
+pip install -r requirements.txt
 ```
 
 ```bash
