@@ -35,6 +35,7 @@ The required parameters are :
 3. socmed_type : socmed type (e.g whatsapp)
 4. module_flag : module flag (e.g ebesha)
 <br>
+
 Expected output :
 1. Chatbot generate response based on the knowledge-base via RAG 
 2. Chatbot retrieve data from Database and generate response of list of selected items
