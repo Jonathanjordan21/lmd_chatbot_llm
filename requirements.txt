@@ -5,6 +5,8 @@ faiss-cpu
 torch
 huggingface
 langchain
+sentence-transformers
+sentencepiece
 sqlalchemy
 psycopg2
 redis

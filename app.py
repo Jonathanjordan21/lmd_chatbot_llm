@@ -152,6 +152,10 @@ def chatbot():
         tenant_name = request.form["tenant_name"]
         module_flag = request.form["module_flag"]
         socmed_type = request.form["socmed_type"]
+        try :
+            openai_api_key = request.form["openai_api_key"]
+        except :
+            openai_api_key = None
         # try :
         #     redis_url = request.form['redis_url']
         # except :
@@ -197,7 +201,7 @@ def chatbot():
         tables = [a[0] for a in cur.fetchall() if 'knowled' not in a[0] and 'pg_' not in a[0] and '_embedd' not in a[0] and '_cache' not in a[0]]
         print(tables)
         cls_model = load_cls_chain(llm, tables)
-        llm_all = load_model_chain(vecs, llm, sql_llm, cls_model, conn)
+        llm_all = load_model_chain(vecs, llm, sql_llm, cls_model, conn, openai_api_key)
 
         print(cls_model.invoke({'question':query}))
 
@@ -223,19 +227,19 @@ def chatbot():
         }}
     
 
-@app.route('/delete', methods=['POST'])
-def delete_redis():
-    tenant_name = request.form["tenant_name"]
-    module_flag = request.form["module_flag"]
-    socmed_type = request.form["socmed_type"]
+# @app.route('/delete', methods=['POST'])
+# def delete_redis():
+#     tenant_name = request.form["tenant_name"]
+#     module_flag = request.form["module_flag"]
+#     socmed_type = request.form["socmed_type"]
 
-    naming = f"{module_flag}_{tenant_name}_{socmed_type}"
+#     naming = f"{module_flag}_{tenant_name}_{socmed_type}"
 
-    r.delete(naming)
-    return {
-        "status" : 200, "data" : {
-        "response":"redis cache has been successfully deleted"
-    }}
+#     r.delete(naming)
+#     return {
+#         "status" : 200, "data" : {
+#         "response":"redis cache has been successfully deleted"
+#     }}
 
 
 @app.route('/')
