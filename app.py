@@ -137,7 +137,6 @@ def update_knowledge():
 def chatbot():
     global r
     global conn
-    set_llm_cache(SQLAlchemyCache(engine))
 
     if request.method == 'POST':
         query = request.form["query"] # User input 
@@ -259,6 +258,7 @@ def delete_cache():
     # Close the cursor and connection
     cursor.close()
     # connection.close()
+    set_llm_cache(SQLAlchemyCache(engine))
 
 
     return {
