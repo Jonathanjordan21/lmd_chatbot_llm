@@ -6,13 +6,16 @@ Deploy docker Postgre and Redis images
 docker-compose up
 ```
 <br>
+
 Install python packages and run Flask App
 ```bash
 pip install -r requirements
 ```
+
 ```bash
 flask run
 ```
+
 <br>
 
 ### Cache Data
