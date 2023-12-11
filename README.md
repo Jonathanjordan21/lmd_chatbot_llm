@@ -11,7 +11,7 @@ Install python packages and run Flask App
 pip install -r requirements
 flask run
 ```
-
+<br>
 ### Cache Data
 Before generating the Chatbot response, make POST api call of `form-data` type to cache the knowledge base embeddings to /cache_data endpoint. <br>
 The required parameters are :
