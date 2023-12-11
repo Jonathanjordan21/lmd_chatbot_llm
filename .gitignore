@@ -10,6 +10,9 @@ __pycache__/
 test.py
 test2.py
 
+# Postgres data
+postgres/data
+
 # Distribution / packaging
 .Python
 build/
