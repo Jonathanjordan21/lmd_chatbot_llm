@@ -1,0 +1,10 @@
+flask
+pandas
+numpy
+faiss-cpu
+torch
+huggingface
+langchain
+sqlalchemy
+psycopg2
+redis

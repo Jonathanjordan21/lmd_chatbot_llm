@@ -84,7 +84,7 @@ def update_knowledge():
         module_flag = request.form["module_flag"]
         socmed_type = request.form["socmed_type"]
         redis_url = request.form['redis_url']
-        db_name = request.form["db_name"] # Name of PostgreSQL table where knowledge base is stored in ["question", "answer"] format
+        db_name = request.form["table_name"] # Name of PostgreSQL table where knowledge base is stored in ["question", "answer"] format
 
         naming = f"{module_flag}_{tenant_name}_{socmed_type}" # redis cache naming convention format
 
@@ -152,7 +152,10 @@ def chatbot():
         tenant_name = request.form["tenant_name"]
         module_flag = request.form["module_flag"]
         socmed_type = request.form["socmed_type"]
-        redis_url = request.form['redis_url']
+        # try :
+        #     redis_url = request.form['redis_url']
+        # except :
+        #     redis_url = "redis://localhost:6379"
 
         # th = float(request.form["th"]) # query threshold
 
