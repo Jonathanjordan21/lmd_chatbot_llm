@@ -1,6 +1,7 @@
 from langchain.schema.runnable import RunnableBranch, RunnablePassthrough
 from langchain.prompts import ChatPromptTemplate, PromptTemplate
 from langchain.schema import StrOutputParser
+from langchain.chat_models import ChatOpenAI
 from operator import itemgetter
 import re
 
@@ -41,7 +42,7 @@ def format_docs(d):
     print(d)
     return "\n\n".join([x.page_content for x in d])
 
-def load_model_chain(vecs, model, sql_model, cls_model, conn):
+def load_model_chain(vecs, model, sql_model, cls_model, conn, openai_api_key=None):
     cur = conn.cursor()
 
     template = """You are a customer service who is very careful on giving information to customers.
@@ -59,6 +60,10 @@ def load_model_chain(vecs, model, sql_model, cls_model, conn):
     sql_prompt = PromptTemplate.from_template(sql_template)
 
     # sql_ans_template = ""
+
+    if openai_api_key!= None:
+        llm = sql_model = ChatOpenAI(temperature=0, openai_api_key=openai_api_key)
+        # cls_model = load_cls_chain(llm)
 
     branch = RunnableBranch(
         (
@@ -144,7 +149,7 @@ def parse_or_fix(conn, llm, text, question, table):#, question:str, table:str):
             out = cur.fetchall()
             print(out)
             if len(out) == 0:
-              raise Exception("The result is empty! Try other way, for example try to change the string value")
+                raise Exception("The result is empty! Try other way, for example try to change the string value")
             # out = "\n".join([" | ".join([str(a) for a in x]) for x in out])
             # print(out)
             # print(type(out))
