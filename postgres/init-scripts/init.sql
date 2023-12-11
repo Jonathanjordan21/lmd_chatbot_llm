@@ -1,0 +1,645 @@
+--
+-- PostgreSQL database dump
+--
+
+
+-- Dumped from database version 13.9 (Ubuntu 13.9-1.pgdg20.04+1)
+-- Dumped by pg_dump version 15.0
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+--
+-- Name: public; Type: SCHEMA; Schema: -; Owner: postgres
+--
+
+-- *not* creating schema, since initdb creates it
+
+ALTER SCHEMA public OWNER TO postgres;
+
+-- ALTER SCHEMA public OWNER TO lmd
+
+--
+-- Name: btree_gin; Type: EXTENSION; Schema: -; Owner: -
+--
+
+CREATE EXTENSION IF NOT EXISTS btree_gin WITH SCHEMA public;
+
+
+--
+-- Name: EXTENSION btree_gin; Type: COMMENT; Schema: -; Owner: 
+--
+
+COMMENT ON EXTENSION btree_gin IS 'support for indexing common datatypes in GIN';
+
+
+--
+-- Name: btree_gist; Type: EXTENSION; Schema: -; Owner: -
+--
+
+CREATE EXTENSION IF NOT EXISTS btree_gist WITH SCHEMA public;
+
+
+--
+-- Name: EXTENSION btree_gist; Type: COMMENT; Schema: -; Owner: 
+--
+
+COMMENT ON EXTENSION btree_gist IS 'support for indexing common datatypes in GiST';
+
+
+--
+-- Name: citext; Type: EXTENSION; Schema: -; Owner: -
+--
+
+CREATE EXTENSION IF NOT EXISTS citext WITH SCHEMA public;
+
+
+--
+-- Name: EXTENSION citext; Type: COMMENT; Schema: -; Owner: 
+--
+
+COMMENT ON EXTENSION citext IS 'data type for case-insensitive character strings';
+
+
+--
+-- Name: cube; Type: EXTENSION; Schema: -; Owner: -
+--
+
+CREATE EXTENSION IF NOT EXISTS cube WITH SCHEMA public;
+
+
+--
+-- Name: EXTENSION cube; Type: COMMENT; Schema: -; Owner: 
+--
+
+COMMENT ON EXTENSION cube IS 'data type for multidimensional cubes';
+
+
+--
+-- Name: dblink; Type: EXTENSION; Schema: -; Owner: -
+--
+
+CREATE EXTENSION IF NOT EXISTS dblink WITH SCHEMA public;
+
+
+--
+-- Name: EXTENSION dblink; Type: COMMENT; Schema: -; Owner: 
+--
+
+COMMENT ON EXTENSION dblink IS 'connect to other PostgreSQL databases from within a database';
+
+
+--
+-- Name: dict_int; Type: EXTENSION; Schema: -; Owner: -
+--
+
+CREATE EXTENSION IF NOT EXISTS dict_int WITH SCHEMA public;
+
+
+--
+-- Name: EXTENSION dict_int; Type: COMMENT; Schema: -; Owner: 
+--
+
+COMMENT ON EXTENSION dict_int IS 'text search dictionary template for integers';
+
+
+--
+-- Name: dict_xsyn; Type: EXTENSION; Schema: -; Owner: -
+--
+
+CREATE EXTENSION IF NOT EXISTS dict_xsyn WITH SCHEMA public;
+
+
+--
+-- Name: EXTENSION dict_xsyn; Type: COMMENT; Schema: -; Owner: 
+--
+
+COMMENT ON EXTENSION dict_xsyn IS 'text search dictionary template for extended synonym processing';
+
+
+--
+-- Name: earthdistance; Type: EXTENSION; Schema: -; Owner: -
+--
+
+CREATE EXTENSION IF NOT EXISTS earthdistance WITH SCHEMA public;
+
+
+--
+-- Name: EXTENSION earthdistance; Type: COMMENT; Schema: -; Owner: 
+--
+
+COMMENT ON EXTENSION earthdistance IS 'calculate great-circle distances on the surface of the Earth';
+
+
+--
+-- Name: fuzzystrmatch; Type: EXTENSION; Schema: -; Owner: -
+--
+
+CREATE EXTENSION IF NOT EXISTS fuzzystrmatch WITH SCHEMA public;
+
+
+--
+-- Name: EXTENSION fuzzystrmatch; Type: COMMENT; Schema: -; Owner: 
+--
+
+COMMENT ON EXTENSION fuzzystrmatch IS 'determine similarities and distance between strings';
+
+
+--
+-- Name: hstore; Type: EXTENSION; Schema: -; Owner: -
+--
+
+CREATE EXTENSION IF NOT EXISTS hstore WITH SCHEMA public;
+
+
+--
+-- Name: EXTENSION hstore; Type: COMMENT; Schema: -; Owner: 
+--
+
+COMMENT ON EXTENSION hstore IS 'data type for storing sets of (key, value) pairs';
+
+
+--
+-- Name: intarray; Type: EXTENSION; Schema: -; Owner: -
+--
+
+CREATE EXTENSION IF NOT EXISTS intarray WITH SCHEMA public;
+
+
+--
+-- Name: EXTENSION intarray; Type: COMMENT; Schema: -; Owner: 
+--
+
+COMMENT ON EXTENSION intarray IS 'functions, operators, and index support for 1-D arrays of integers';
+
+
+--
+-- Name: ltree; Type: EXTENSION; Schema: -; Owner: -
+--
+
+CREATE EXTENSION IF NOT EXISTS ltree WITH SCHEMA public;
+
+
+--
+-- Name: EXTENSION ltree; Type: COMMENT; Schema: -; Owner: 
+--
+
+COMMENT ON EXTENSION ltree IS 'data type for hierarchical tree-like structures';
+
+
+--
+-- Name: pg_stat_statements; Type: EXTENSION; Schema: -; Owner: -
+--
+
+CREATE EXTENSION IF NOT EXISTS pg_stat_statements WITH SCHEMA public;
+
+
+--
+-- Name: EXTENSION pg_stat_statements; Type: COMMENT; Schema: -; Owner: 
+--
+
+COMMENT ON EXTENSION pg_stat_statements IS 'track planning and execution statistics of all SQL statements executed';
+
+
+--
+-- Name: pg_trgm; Type: EXTENSION; Schema: -; Owner: -
+--
+
+CREATE EXTENSION IF NOT EXISTS pg_trgm WITH SCHEMA public;
+
+
+--
+-- Name: EXTENSION pg_trgm; Type: COMMENT; Schema: -; Owner: 
+--
+
+COMMENT ON EXTENSION pg_trgm IS 'text similarity measurement and index searching based on trigrams';
+
+
+--
+-- Name: pgcrypto; Type: EXTENSION; Schema: -; Owner: -
+--
+
+CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA public;
+
+
+--
+-- Name: EXTENSION pgcrypto; Type: COMMENT; Schema: -; Owner: 
+--
+
+COMMENT ON EXTENSION pgcrypto IS 'cryptographic functions';
+
+
+--
+-- Name: pgrowlocks; Type: EXTENSION; Schema: -; Owner: -
+--
+
+CREATE EXTENSION IF NOT EXISTS pgrowlocks WITH SCHEMA public;
+
+
+--
+-- Name: EXTENSION pgrowlocks; Type: COMMENT; Schema: -; Owner: 
+--
+
+COMMENT ON EXTENSION pgrowlocks IS 'show row-level locking information';
+
+
+--
+-- Name: pgstattuple; Type: EXTENSION; Schema: -; Owner: -
+--
+
+CREATE EXTENSION IF NOT EXISTS pgstattuple WITH SCHEMA public;
+
+
+--
+-- Name: EXTENSION pgstattuple; Type: COMMENT; Schema: -; Owner: 
+--
+
+COMMENT ON EXTENSION pgstattuple IS 'show tuple-level statistics';
+
+
+--
+-- Name: tablefunc; Type: EXTENSION; Schema: -; Owner: -
+--
+
+CREATE EXTENSION IF NOT EXISTS tablefunc WITH SCHEMA public;
+
+
+--
+-- Name: EXTENSION tablefunc; Type: COMMENT; Schema: -; Owner: 
+--
+
+COMMENT ON EXTENSION tablefunc IS 'functions that manipulate whole tables, including crosstab';
+
+
+--
+-- Name: unaccent; Type: EXTENSION; Schema: -; Owner: -
+--
+
+CREATE EXTENSION IF NOT EXISTS unaccent WITH SCHEMA public;
+
+
+--
+-- Name: EXTENSION unaccent; Type: COMMENT; Schema: -; Owner: 
+--
+
+COMMENT ON EXTENSION unaccent IS 'text search dictionary that removes accents';
+
+
+--
+-- Name: uuid-ossp; Type: EXTENSION; Schema: -; Owner: -
+--
+
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA public;
+
+
+--
+-- Name: EXTENSION "uuid-ossp"; Type: COMMENT; Schema: -; Owner: 
+--
+
+COMMENT ON EXTENSION "uuid-ossp" IS 'generate universally unique identifiers (UUIDs)';
+
+
+--
+-- Name: xml2; Type: EXTENSION; Schema: -; Owner: -
+--
+
+CREATE EXTENSION IF NOT EXISTS xml2 WITH SCHEMA public;
+
+
+--
+-- Name: EXTENSION xml2; Type: COMMENT; Schema: -; Owner: 
+--
+
+COMMENT ON EXTENSION xml2 IS 'XPath querying and XSLT';
+
+
+SET default_tablespace = '';
+
+SET default_table_access_method = heap;
+
+--
+-- Name: indomaret_knowledge; Type: TABLE; Schema: public; Owner: lmd
+--
+
+CREATE TABLE public.indomaret_knowledge (
+    index bigint,
+    question text,
+    answer text
+);
+
+
+ALTER TABLE public.indomaret_knowledge OWNER TO lmd;
+
+--
+-- Name: langchain_pg_collection; Type: TABLE; Schema: public; Owner: lmd
+--
+
+CREATE TABLE public.langchain_pg_collection (
+    name character varying,
+    cmetadata json,
+    uuid uuid NOT NULL
+);
+
+
+ALTER TABLE public.langchain_pg_collection OWNER TO lmd;
+
+--
+-- Name: langchain_pg_embedding; Type: TABLE; Schema: public; Owner: lmd
+--
+
+CREATE TABLE public.langchain_pg_embedding (
+    collection_id uuid,
+    embedding real[],
+    document character varying,
+    cmetadata json,
+    custom_id character varying,
+    uuid uuid NOT NULL
+);
+
+
+ALTER TABLE public.langchain_pg_embedding OWNER TO lmd;
+
+--
+-- Name: lmd_knowledge; Type: TABLE; Schema: public; Owner: lmd
+--
+
+CREATE TABLE public.lmd_knowledge (
+    index bigint,
+    "Unnamed: 0" bigint,
+    question text,
+    answer text
+);
+
+
+ALTER TABLE public.lmd_knowledge OWNER TO lmd;
+
+--
+-- Name: products; Type: TABLE; Schema: public; Owner: lmd
+--
+
+CREATE TABLE public.products (
+    index bigint,
+    product_id bigint,
+    product_name text,
+    price double precision,
+    user_id bigint
+);
+
+
+ALTER TABLE public.products OWNER TO lmd;
+
+--
+-- Name: sales; Type: TABLE; Schema: public; Owner: lmd
+--
+
+CREATE TABLE public.sales (
+    index bigint,
+    sale_id bigint,
+    user_id bigint,
+    product_id bigint,
+    sale_date text,
+    quantity bigint,
+    total_price double precision
+);
+
+
+ALTER TABLE public.sales OWNER TO lmd;
+
+--
+-- Name: servers; Type: TABLE; Schema: public; Owner: lmd
+--
+
+CREATE TABLE public.servers (
+    index bigint,
+    server_id bigint,
+    location text,
+    status text,
+    user_id bigint
+);
+
+
+ALTER TABLE public.servers OWNER TO lmd;
+
+--
+-- Data for Name: indomaret_knowledge; Type: TABLE DATA; Schema: public; Owner: lmd
+--
+
+COPY public.indomaret_knowledge (index, question, answer) FROM stdin;
+0	What is Indomaret?	Indomaret is a leading minimarket chain in Indonesia with over 18,000 stores across the country.
+1	What are the hours of operation for Indomaret stores?	Indomaret stores typically operate from 7:00 AM to 10:00 PM.
+2	What products does Indomaret sell?	Indomaret sells a wide variety of products, including groceries, household goods, personal care items, and food and beverages.
+3	Does Indomaret accept credit cards?	Yes, Indomaret accepts credit cards from major providers.
+4	How do I find an Indomaret store near me?	You can find an Indomaret store near you using the store locator on the Indomaret website.
+0	What is Indomaret Poinku?	Indomaret Poinku is a loyalty program that rewards Indomaret customers for their purchases.
+1	How do I earn Indomaret Poinku points?	You can earn Indomaret Poinku points by making purchases at Indomaret stores, using the Indomaret mobile app, or shopping online at Klik Indomaret.
+2	What can I redeem Indomaret Poinku points for?	You can redeem Indomaret Poinku points for a variety of rewards, including discounts on groceries, free products, and exclusive offers.
+3	How do I check my Indomaret Poinku balance?	You can check your Indomaret Poinku balance by logging into your Indomaret Poinku account or using the Indomaret mobile app.
+4	What is Indomaret Klik?	Indomaret Klik is an online shopping platform that allows you to order groceries, household goods, and other products from Indomaret stores for delivery or pickup.
+5	What are the benefits of using Indomaret Klik?	Indomaret Klik offers a variety of benefits, including convenient online shopping, delivery to your home or office, and a wide selection of products.
+6	How do I place an order on Indomaret Klik?	To place an order on Indomaret Klik, simply add the items you want to your cart, proceed to checkout, and enter your payment information.
+7	How much does it cost to ship an Indomaret Klik order?	Shipping costs for Indomaret Klik orders vary depending on the size and weight of your order and your delivery location.
+8	How long does it take to receive an Indomaret Klik order?	Indomaret Klik orders typically arrive within 1-3 business days.
+9	Can I return an Indomaret Klik order?	Yes, you can return an Indomaret Klik order if you are not satisfied with it. Simply contact Indomaret customer service for assistance.
+\.
+
+
+--
+-- Data for Name: langchain_pg_collection; Type: TABLE DATA; Schema: public; Owner: lmd
+--
+
+COPY public.langchain_pg_collection (name, cmetadata, uuid) FROM stdin;
+state_of_the_union	null	3e19ca46-36d2-4606-92fc-6e25e88c9ff8
+\.
+
+
+--
+-- Data for Name: langchain_pg_embedding; Type: TABLE DATA; Schema: public; Owner: lmd
+--
+
+COPY public.langchain_pg_embedding (collection_id, embedding, document, cmetadata, custom_id, uuid) FROM stdin;
+3e19ca46-36d2-4606-92fc-6e25e88c9ff8	{-0.07514144,0.14668268,-0.12123335,0.041656017,-0.05856728,-0.13683753,0.4259071,0.24764097,0.07140299,0.19631128,0.17779507,-0.112795465,0.070429094,-0.111450695,-0.0020180047,0.19693887,0.03875578,-0.19659679,0.1408798,-0.009891986,0.22352183,0.009766899,-0.031240126,-0.09456789,-0.25623342,-0.2561731,-0.29505348,-0.116836995,-0.17598206,-0.6029636,0.00024756542,-0.07063239,0.46390662,0.22212239,0.07979787,0.20387208,0.26455095,0.13707401,0.24575436,-0.1606287,0.0017769175,-0.11231508,0.21035148,0.32416892,-0.016028458,0.2297389,-0.070321895,0.10299472,-0.21508189,0.06744877,0.07968109,-0.13406599,-0.3028025,-0.14962614,-0.07929186,0.26084992,0.058504898,0.112952076,-0.0918839,0.110514455,-0.04375783,0.11861818,-0.68562335,0.37074664,0.22317354,-0.24732639,-0.017051475,-0.14566721,-0.26512894,0.30203253,-0.042185724,-0.106729805,0.15097208,0.13990994,0.057202835,-0.07163348,-0.07020948,0.18409486,0.04319714,-0.057923336,0.049669374,0.25000343,0.074277334,-0.008801636,0.0064694714,0.15978564,0.23653223,0.026244083,0.13113172,-0.22184914,-0.114355825,-0.3617984,0.45623174,-0.051573996,0.47227708,-0.0762866,0.06370016,-0.2528726,0.19881438,2.9194767,0.15229993,0.18050869,-0.20333336,-0.043122176,-0.15221496,0.10566554,-0.05318497,-0.0012622861,0.020326907,-0.22938894,-0.1161198,0.09510655,0.13918154,-0.0041043614,0.11864742,-0.33926043,-0.0079123555,0.31314945,0.041454103,0.11645781,0.088981666,-0.33184847,0.008743019,-0.25269207,0.10687589,-0.80533344,0.32210112,0.09840093,-0.10270897,0.26370445,0.21645467,0.1425326,-0.24251314,0.21448503,-0.23425621,0.029714769,0.22455825,0.13697849,-0.3123741,-0.15394996,-0.16387017,0.5448529,0.1775737,0.32424465,0.13832371,-0.1466136,-0.16140844,-0.07264919,-0.013145502,0.21677685,-0.082847364,-0.21153577,-0.17057882,-0.1822548,-0.23597755,-0.23054975,-0.11276513,0.0021513898,0.089846194,0.42155018,-0.20285332,0.25236383,0.18373644,-0.1797393,-0.0645091,-0.2181679,0.040532067,-0.101447225,-0.12471951,0.20060258,0.16940989,-0.08391991,0.1091789,0.12094923,-0.15228392,0.14777127,-0.0056017986,0.22631831,-0.07543761,0.05794725,0.14295064,-0.26087344,-0.14267658,0.14485483,0.040675715,0.37606826,-0.100869246,0.12872897,0.2350655,-0.083469726,-0.14157085,0.06587956,-0.098072864,0.11310452,-0.23493586,-0.23288111,0.29107952,-0.045146137,0.2554735,0.012029588,-0.17032969,-0.053301413,-0.35742006,-0.16356896,0.2987769,-0.18721603,0.17843394,0.055320922,-0.22296523,0.045544077,-0.05273169,0.035328493,-0.33538485,-0.052680165,-0.030488966,-0.13716452,0.20056061,-0.012438095,-0.18532439,0.15003008,-0.09016794,-0.20848542,0.4127146,-0.75434333,0.21421163,-0.0243781,-0.41567925,0.08306011,-0.20388062,-0.090749346,-0.016691074,-0.27966988,0.13609135,-0.31699762,-0.34781966,-0.32209587,-0.19300894,0.12297773,-0.026916986,-0.063813515,0.023559786,-0.16462508,0.004783141,0.32104275,0.0019170757,-0.11199317,0.026675949,0.3339732,-0.06263614,0.69522315,-0.33131823,-0.075207524,-0.08171638,-0.041607227,-0.1520856,-0.0975266,-0.14876713,0.024014937,-0.20744467,-0.017016338,0.27110013,-0.08134353,-0.23929803,0.14209554,0.06283558,-0.12875365,0.12107733,0.7422252,0.14522775,0.17733006,-0.14023088,-0.054416925,0.11468061,-0.08968582,-0.24597728,-0.11028725,0.13217598,-0.25162467,0.053404402,0.11735796,-0.25384507,-0.5667048,0.06944577,-0.037597023,0.16003339,0.041577846,0.087673925,0.35454366,-0.01707256,0.026024723,-0.038271323,0.2327585,0.060388323,-0.156925,0.1932448,0.102264255,-0.06712396,0.15008332,0.006493823,0.035315115,-0.04591432,-0.41763434,-0.14631401,-0.01952828,-0.19229013,0.004259025,0.2612519,-0.050649773,0.17719115,-0.21433042,-0.20274176,-0.16503394,0.123793505,0.09000507,0.2491128,0.17649181,-0.035452086,-0.23624106,0.06164136,-0.9939701,0.025645958,-0.26672086,-0.29083318,0.06002794,0.1592985,-0.118175685,-0.01777885,-0.32616588,0.19218804,-0.0044164187,-0.10809926,0.27248597,0.0029291175,-0.16938221,0.058861285,0.12574442,-0.23275082,0.03925028,-0.14680204,0.10852516,0.09179612,0.18233787,-0.08624291,-0.058485907,0.062184732,-0.014140885,-0.211725,-0.34653392,0.07142005,0.1721933,0.24673277,-0.11390696,-0.22902714,-0.11705074,-0.19175409,0.04039152,0.17210017,-0.053221744,-0.025449743,0.01243477,0.040398452,0.03793333,-0.08448926,0.38311115,0.062394638,0.1052435,-0.44451034,-0.072585344,-0.021000607,0.05570178,-0.043870237,0.0017272247,0.09038211,-0.013139901,-0.10160907,-0.33628854,0.221875,-0.05868944,-0.18655585,-0.020852352,0.19782524,-0.0045794123,-0.082724474,0.28576007}	a	{}	c561a6f2-8ee8-11ee-a415-0242ac1c000c	c8dc7622-a269-42e0-950a-a20c76cf918f
+3e19ca46-36d2-4606-92fc-6e25e88c9ff8	{0.050198853,0.24666692,-0.12262174,-0.10373967,-0.07173779,-0.22845824,0.42546153,0.38730195,-0.17842157,0.1057561,0.10490916,-0.4082633,-0.101758085,-0.082924604,-0.054305907,0.39759496,0.07824179,-0.028721964,-0.0956071,0.002313805,0.16319923,-0.119693786,0.05227038,-0.04298945,-0.28611305,-0.13886538,-0.322329,-0.18384705,-0.10031718,-0.4517361,0.05660653,-0.19081588,0.4109763,0.16860932,-0.008603912,0.18556666,0.16590486,0.04956919,0.15842146,-0.20144063,-0.14826436,-0.08880756,0.24295954,0.37208554,-0.0038535474,0.3504808,0.020515008,0.2347296,-0.3113676,0.19400312,0.20302565,-0.07351921,-0.5150208,0.14022711,0.13487859,0.26805025,0.008160387,0.19510907,-0.08079264,0.17661907,0.16434059,-0.01037755,-0.6076792,0.29895583,0.27204242,-0.13098428,-0.028378561,-0.23122191,-0.4163413,0.3148629,0.070243515,-0.1243667,0.12399984,-0.0819416,0.078714676,0.10758404,-0.009548683,0.22092895,0.036837604,-0.1714531,0.12359604,0.10729907,0.11705122,-0.07081304,-0.086132415,0.07587322,0.06492934,0.2617452,0.15760224,-0.11964563,-0.122331835,-0.20622367,0.31138253,-0.08067811,0.29843163,-0.03430329,-0.079022236,-0.28733948,0.2680613,2.8144863,0.001962791,-0.021186536,-0.3221484,0.19716792,-0.066243626,0.16881283,-0.0032995492,0.07446935,-0.13720588,-0.07765889,-0.25337097,0.046961185,0.15781593,0.0011534548,0.021631846,-0.35388735,0.28863594,0.24440487,0.19434036,0.075817086,0.22938587,-0.24691235,0.16358797,-0.23978925,0.11589128,-0.873671,0.115066536,0.1966189,-0.17182009,0.018839443,0.38266852,0.27691045,-0.184979,0.30207387,-0.32986996,0.13630986,0.20257688,0.16607167,-0.14063403,-0.3338531,-0.08291864,0.5454232,0.272895,0.105086066,0.16168411,-0.14174563,-0.23069155,-0.08314169,0.055627096,0.09514952,-0.110501,-0.22637634,-0.0012422837,-0.12525702,-0.06639116,-0.1938523,-0.05256493,-0.037196595,0.06820652,0.25005266,-0.11990463,0.16836977,0.2124787,-0.24732663,-0.08619976,-0.10808563,-0.031096177,-0.09335288,0.044392545,0.2880799,0.16335723,-0.1280201,0.18912716,0.058971167,-0.11316156,0.058182847,0.04976119,0.23854072,-0.021980131,0.067581795,0.047501773,-0.3236324,-0.07915339,0.1070941,0.07910728,0.37375107,-0.17129321,-0.15161882,0.055585105,0.061159734,0.0041105426,-0.03100428,-0.24491417,0.08378037,-0.28452045,-0.1862198,0.24414866,-0.25300893,0.03066437,0.05157773,0.17580855,-0.18970935,-0.33209002,-0.12084925,0.3893603,0.010356265,0.25803646,-0.091368444,-0.055875003,0.17159069,-0.12821443,-0.10019282,-0.34995052,-0.018593796,-0.03296323,-0.23986626,0.018236639,0.032495458,-0.18846118,0.079421096,-0.04100916,-0.03465533,0.24802645,-0.8279636,0.17923121,0.162978,-0.36756,0.13569649,-0.23110038,-0.14033231,-0.022034233,-0.39007643,0.22573668,-0.057853445,-0.20861782,-0.3977436,-0.19255078,0.15854432,-0.1391512,-0.110768534,0.015873699,-0.16976123,-0.11983067,0.29576227,0.0014035857,-0.10461911,0.066705644,0.30522025,-0.00832478,0.49595618,-0.2979992,0.037143987,0.016805476,0.040995482,0.07501151,-0.05246823,-0.26926592,-0.040331867,-0.033508804,-0.14748333,0.22145225,-0.18127574,-0.23968105,-0.007340949,0.18509482,-0.089520276,0.14361759,0.32708704,0.10305869,0.1528185,0.123814106,0.16361153,0.2049853,-0.22044738,-0.055989403,-0.11650041,0.020050714,-0.043246675,0.023040852,0.15876326,-0.25238925,-0.59333247,0.13885258,0.014329405,0.13884825,-0.030731328,0.21643026,0.35681438,-0.15324573,0.052503895,-0.10164102,0.38671562,0.040209565,-0.20133579,0.12194762,0.20772566,-0.2061426,0.18164773,-0.2587438,0.037177663,-0.10181653,-0.30950156,-0.26769915,0.2604945,-0.37686718,0.005346769,0.30663756,0.06259963,0.204,-0.26202714,-0.25467882,-0.24927036,0.07228984,-0.12188449,0.026067147,0.24899058,-0.03870046,-0.19025135,0.029676864,-0.7819312,-0.04505868,-0.34619942,-0.529044,0.123439245,0.26331,-0.113794625,-0.29940522,-0.22845481,0.05730599,0.026118912,-0.122492336,0.38402414,-0.25915205,-0.20331891,0.045140147,0.08730795,-0.21787633,-0.23941569,-0.027745588,-0.119297236,0.2585267,-0.040890526,-0.047489833,-0.0452244,-0.037734106,0.07230095,-0.10797179,-0.20536405,0.09411564,0.059570983,0.37151662,0.19693701,-0.065798916,-0.2074837,-0.026826685,0.017346196,0.19618958,0.13130055,-0.08872536,0.23022868,0.21393041,-0.21036704,0.037925657,0.44164386,0.15346777,0.022383297,-0.35217395,0.009095068,-0.019223532,-0.051851213,-0.30269313,0.07076169,-0.0025681676,-0.059204057,0.022904927,-0.32205987,0.13609274,-0.17738265,-0.21003754,0.10325456,0.13213748,0.06857334,-0.060324132,0.08253843}	b	{}	c561aa8a-8ee8-11ee-a415-0242ac1c000c	e7cd5b19-02da-42fb-a84e-0f6d2a7b3f19
+3e19ca46-36d2-4606-92fc-6e25e88c9ff8	{-0.017438926,-0.0041794754,-0.07140291,-0.06857704,-0.21700549,-0.19317782,0.25382102,0.47924852,-0.08401182,0.28188777,0.19483185,-0.4586884,-0.010842138,-0.31274638,-0.17643774,0.14230694,0.119264066,0.10626399,0.08826526,0.051658515,0.09615776,-0.084329784,-0.11148503,-0.07431105,-0.07371488,-0.19328366,-0.31959745,-0.05743937,-0.32106802,-0.6158891,-0.13816482,-0.20288666,0.4740866,0.31116322,-0.025070852,0.22688998,-0.02284897,-0.023786297,0.054062713,0.023838699,-0.23423411,0.09959606,0.17894755,0.39266095,0.36159799,0.21701406,-0.013361934,0.19775553,-0.08831378,0.21232869,0.015508751,-0.08735389,-0.2369235,-0.20984443,0.029024327,0.15007986,-0.03342208,-0.04383416,0.25207058,-0.015017784,0.30771908,0.088220455,-0.6222602,0.18608291,-0.012530913,-0.11339468,0.31508532,0.027736502,-0.17928575,0.28525916,-0.14342348,0.013721152,-0.03125113,0.053295534,-0.14992538,-0.016089337,-0.076686405,0.14206499,0.007307203,-0.1409799,0.23712552,0.21722591,0.119097866,-0.023958003,0.19470572,0.013016701,0.23741162,0.08949547,0.18181758,-0.107917406,0.23925404,-0.11579198,0.114967756,-0.06149186,0.030590015,-0.20363303,0.07872414,-0.29880968,0.36631003,3.0198243,-0.19775824,0.056432378,0.021642273,0.11468538,-0.0837292,-0.16036114,0.278306,-0.10657477,0.108847,-0.23426886,-0.23111469,0.014407833,-0.12542713,-0.2706394,0.15246724,0.13530739,0.11762782,0.06839887,0.49641347,0.26123425,0.21381778,-0.16416393,-0.100065954,0.054347735,0.037983444,-1.1410362,0.27721497,0.27149507,-0.19973584,0.024592891,0.42707586,0.3603476,-0.18480629,0.12734707,-0.039766606,0.14972314,-0.03283478,0.08055631,-0.085300066,-0.36031651,0.25581878,0.4367526,-0.09819118,0.049257312,0.0038852245,-0.21154903,-0.22200148,-0.24398033,0.07357144,0.043202925,0.06100222,-0.20687099,-0.004393837,-0.06312871,-0.07511664,-0.15705074,0.027370123,-0.37197992,0.1456206,0.4738193,-0.26333454,0.44958973,0.24016412,0.27414712,-0.03245444,-0.07196965,0.08681821,0.06423218,-0.028662957,0.1566114,0.2996902,-0.091382585,0.022034233,-0.12517732,-0.15979384,-0.08287923,-0.20616545,0.15323003,0.14865948,0.23816574,0.22997834,-0.14154832,-0.08754677,0.20237768,-0.2853804,0.3530294,0.04108061,-0.23283678,0.2324015,0.011695497,0.18504007,-0.17732532,-0.27781978,0.13502224,-0.32647476,-0.47874948,0.25351238,-0.31209582,0.10819162,-0.0039279945,-0.030875131,-0.2516332,-0.15090251,0.09054492,-0.010156512,-0.094816595,-0.1627947,-0.15958536,-0.20952845,0.12514833,-0.049938384,-0.20835537,-0.19790243,-0.33948305,0.00478485,0.17749189,0.18136163,-0.13838106,0.008920769,-0.08252072,0.06701141,-0.04195549,0.30193004,-0.6356773,0.34686482,0.076850116,-0.3942721,0.19180186,-0.26598406,0.06184651,0.0913676,-0.39152694,-0.08767784,-0.08925564,-0.07771325,-0.06047907,-0.22107299,0.09641158,0.01768212,-0.074911736,-0.1259691,-0.1963438,-0.15019666,0.053429548,-0.11937958,-0.5289826,-0.11961323,0.37301365,-0.04034474,0.36199513,-0.5129764,0.00025958815,0.059302043,-0.10095919,-0.21098779,-0.031268224,-0.31956837,0.14225101,-0.17629898,-0.3432057,0.101821505,0.084119745,-0.24531715,0.16562058,0.07408535,0.06594459,0.30184844,0.44364968,0.27460063,-0.104697704,0.24931575,0.01405228,0.18411863,-0.16024242,0.12999569,-0.1287782,0.06365261,-0.050172556,-0.023404697,0.38225126,-0.2790486,-0.40105093,-0.009660224,0.05459721,0.12864317,-0.004781944,0.21345824,0.35024723,-0.029442156,0.0350112,0.0051226453,0.070960455,0.046566933,-0.22750568,0.3389474,0.17948236,-0.22163582,-0.031785823,-0.28581125,0.15723185,0.14068846,-0.19914861,-0.3911341,0.30279723,-0.17126942,-0.060420316,0.26049787,0.24482222,0.22438003,-0.30429074,-0.0072748885,-0.1949163,0.050749436,0.0937427,0.013168037,0.2617968,-0.05956893,0.05579568,0.14634974,-0.7622617,-0.12600754,-0.40978417,-0.49403763,0.021717697,0.22126377,-0.3061684,-0.3411418,-0.3146979,0.15975028,-0.0432131,-0.22024572,0.19509728,-0.14376035,-0.3749776,-0.09738297,-0.014691238,-0.28189638,-0.15235785,0.079845175,0.056587417,-6.4613916e-05,0.20266747,-0.08023049,0.107200064,-0.10747683,-0.019917676,-0.06396545,-0.032554712,-0.0301683,-0.014769261,0.34211013,0.1571864,-0.058873255,0.034724753,-0.15717615,0.2621496,0.1460087,-0.08455143,0.1290477,0.22460294,0.08267612,-0.18176587,-0.03489868,0.13760404,0.10625276,-0.04186094,-0.39934108,0.12851445,0.21637243,0.049445868,-0.10635405,0.20432544,-0.16356646,-0.01685582,0.0349317,-0.23984273,0.061090622,-0.015688067,-0.21110888,0.0113408305,-0.05669658,-0.18491177,-0.04612958,0.25650945}	c	{}	c561ab66-8ee8-11ee-a415-0242ac1c000c	7c44be41-0b72-4bab-86c7-0a02a9dde272
+3e19ca46-36d2-4606-92fc-6e25e88c9ff8	{0.050198853,0.24666692,-0.12262174,-0.10373967,-0.07173779,-0.22845824,0.42546153,0.38730195,-0.17842157,0.1057561,0.10490916,-0.4082633,-0.101758085,-0.082924604,-0.054305907,0.39759496,0.07824179,-0.028721964,-0.0956071,0.002313805,0.16319923,-0.119693786,0.05227038,-0.04298945,-0.28611305,-0.13886538,-0.322329,-0.18384705,-0.10031718,-0.4517361,0.05660653,-0.19081588,0.4109763,0.16860932,-0.008603912,0.18556666,0.16590486,0.04956919,0.15842146,-0.20144063,-0.14826436,-0.08880756,0.24295954,0.37208554,-0.0038535474,0.3504808,0.020515008,0.2347296,-0.3113676,0.19400312,0.20302565,-0.07351921,-0.5150208,0.14022711,0.13487859,0.26805025,0.008160387,0.19510907,-0.08079264,0.17661907,0.16434059,-0.01037755,-0.6076792,0.29895583,0.27204242,-0.13098428,-0.028378561,-0.23122191,-0.4163413,0.3148629,0.070243515,-0.1243667,0.12399984,-0.0819416,0.078714676,0.10758404,-0.009548683,0.22092895,0.036837604,-0.1714531,0.12359604,0.10729907,0.11705122,-0.07081304,-0.086132415,0.07587322,0.06492934,0.2617452,0.15760224,-0.11964563,-0.122331835,-0.20622367,0.31138253,-0.08067811,0.29843163,-0.03430329,-0.079022236,-0.28733948,0.2680613,2.8144863,0.001962791,-0.021186536,-0.3221484,0.19716792,-0.066243626,0.16881283,-0.0032995492,0.07446935,-0.13720588,-0.07765889,-0.25337097,0.046961185,0.15781593,0.0011534548,0.021631846,-0.35388735,0.28863594,0.24440487,0.19434036,0.075817086,0.22938587,-0.24691235,0.16358797,-0.23978925,0.11589128,-0.873671,0.115066536,0.1966189,-0.17182009,0.018839443,0.38266852,0.27691045,-0.184979,0.30207387,-0.32986996,0.13630986,0.20257688,0.16607167,-0.14063403,-0.3338531,-0.08291864,0.5454232,0.272895,0.105086066,0.16168411,-0.14174563,-0.23069155,-0.08314169,0.055627096,0.09514952,-0.110501,-0.22637634,-0.0012422837,-0.12525702,-0.06639116,-0.1938523,-0.05256493,-0.037196595,0.06820652,0.25005266,-0.11990463,0.16836977,0.2124787,-0.24732663,-0.08619976,-0.10808563,-0.031096177,-0.09335288,0.044392545,0.2880799,0.16335723,-0.1280201,0.18912716,0.058971167,-0.11316156,0.058182847,0.04976119,0.23854072,-0.021980131,0.067581795,0.047501773,-0.3236324,-0.07915339,0.1070941,0.07910728,0.37375107,-0.17129321,-0.15161882,0.055585105,0.061159734,0.0041105426,-0.03100428,-0.24491417,0.08378037,-0.28452045,-0.1862198,0.24414866,-0.25300893,0.03066437,0.05157773,0.17580855,-0.18970935,-0.33209002,-0.12084925,0.3893603,0.010356265,0.25803646,-0.091368444,-0.055875003,0.17159069,-0.12821443,-0.10019282,-0.34995052,-0.018593796,-0.03296323,-0.23986626,0.018236639,0.032495458,-0.18846118,0.079421096,-0.04100916,-0.03465533,0.24802645,-0.8279636,0.17923121,0.162978,-0.36756,0.13569649,-0.23110038,-0.14033231,-0.022034233,-0.39007643,0.22573668,-0.057853445,-0.20861782,-0.3977436,-0.19255078,0.15854432,-0.1391512,-0.110768534,0.015873699,-0.16976123,-0.11983067,0.29576227,0.0014035857,-0.10461911,0.066705644,0.30522025,-0.00832478,0.49595618,-0.2979992,0.037143987,0.016805476,0.040995482,0.07501151,-0.05246823,-0.26926592,-0.040331867,-0.033508804,-0.14748333,0.22145225,-0.18127574,-0.23968105,-0.007340949,0.18509482,-0.089520276,0.14361759,0.32708704,0.10305869,0.1528185,0.123814106,0.16361153,0.2049853,-0.22044738,-0.055989403,-0.11650041,0.020050714,-0.043246675,0.023040852,0.15876326,-0.25238925,-0.59333247,0.13885258,0.014329405,0.13884825,-0.030731328,0.21643026,0.35681438,-0.15324573,0.052503895,-0.10164102,0.38671562,0.040209565,-0.20133579,0.12194762,0.20772566,-0.2061426,0.18164773,-0.2587438,0.037177663,-0.10181653,-0.30950156,-0.26769915,0.2604945,-0.37686718,0.005346769,0.30663756,0.06259963,0.204,-0.26202714,-0.25467882,-0.24927036,0.07228984,-0.12188449,0.026067147,0.24899058,-0.03870046,-0.19025135,0.029676864,-0.7819312,-0.04505868,-0.34619942,-0.529044,0.123439245,0.26331,-0.113794625,-0.29940522,-0.22845481,0.05730599,0.026118912,-0.122492336,0.38402414,-0.25915205,-0.20331891,0.045140147,0.08730795,-0.21787633,-0.23941569,-0.027745588,-0.119297236,0.2585267,-0.040890526,-0.047489833,-0.0452244,-0.037734106,0.07230095,-0.10797179,-0.20536405,0.09411564,0.059570983,0.37151662,0.19693701,-0.065798916,-0.2074837,-0.026826685,0.017346196,0.19618958,0.13130055,-0.08872536,0.23022868,0.21393041,-0.21036704,0.037925657,0.44164386,0.15346777,0.022383297,-0.35217395,0.009095068,-0.019223532,-0.051851213,-0.30269313,0.07076169,-0.0025681676,-0.059204057,0.022904927,-0.32205987,0.13609274,-0.17738265,-0.21003754,0.10325456,0.13213748,0.06857334,-0.060324132,0.08253843}	b	{}	c561ac1a-8ee8-11ee-a415-0242ac1c000c	2414bd15-ef6d-4933-9158-75c3711ac517
+\.
+
+
+--
+-- Data for Name: lmd_knowledge; Type: TABLE DATA; Schema: public; Owner: lmd
+--
+
+COPY public.lmd_knowledge (index, "Unnamed: 0", question, answer) FROM stdin;
+0	0	Apa itu Lintas Media Danawa?	\n\nLintas Media Danawa (LMD) adalah perusahaan teknologi informasi yang menyediakan solusi CRM (Customer Relationship Management) dan Managed Services. LMD didirikan pada tahun 2003 dan berkantor pusat di Jakarta, Indonesia.\n
+1	1	Produk dan layanan apa yang ditawarkan LMD?	\n\nLMD menawarkan berbagai solusi CRM dan Managed Services, termasuk:\n\n    * **eBesha Omnichannel CRM**\n    * **eBesha Customer Experience**\n    * **eBesha Employee Experience**\n    * **eBesha Managed Services**\n
+2	2	Untuk siapa solusi CRM dan Managed Services LMD?	\n\nSolusi CRM dan Managed Services LMD cocok untuk perusahaan dari berbagai sektor industri, seperti:\n\n    * E-commerce\n    * Fintech\n    * Logistik\n    * Manufaktur\n    * Media dan hiburan\n    * Perbankan\n    * Televisi\n    * Dan lain-lain\n
+3	3	Apa manfaat menggunakan solusi CRM dan Managed Services LMD?	\n\nSolusi CRM dan Managed Services LMD dapat membantu perusahaan dalam:\n\n    * Meningkatkan pengalaman pelanggan\n    * Meningkatkan efisiensi bisnis\n    * Mengurangi biaya\n
+4	4	Bagaimana cara menghubungi LMD?	\n\nAnda dapat menghubungi LMD melalui telepon, email, atau formulir kontak di situs web LMD.\n\nBerikut adalah beberapa pertanyaan tambahan yang sering diajukan:\n
+5	5	Berapa harga solusi CRM dan Managed Services LMD?	\n\nHarga solusi CRM dan Managed Services LMD bervariasi tergantung pada kebutuhan spesifik perusahaan Anda. Untuk mengetahui harga, silahkan hubungi tim penjualan LMD.\n
+6	6	Apakah LMD menawarkan free trial?	\n\nYa, LMD menawarkan free trial untuk beberapa solusi CRM dan Managed Services. Untuk informasi lebih lanjut, silahkan hubungi tim penjualan LMD.\n
+7	7	Apakah LMD memiliki tim yang dapat membantu penerapan dan dukungan solusi CRM dan Managed Services?	\n\nYa, LMD memiliki tim berpengalaman yang dapat membantu penerapan dan dukungan solusi CRM dan Managed Services. Tim ini akan bekerja sama dengan Anda untuk memahami kebutuhan perusahaan Anda dan memastikan bahwa solusi CRM dan Managed Services yang diterapkan sesuai dengan kebutuhan Anda.\n\nSemoga FAQ ini bermanfaat. Jika Anda memiliki pertanyaan lain, silahkan hubungi LMD.
+\.
+
+
+--
+-- Data for Name: products; Type: TABLE DATA; Schema: public; Owner: lmd
+--
+
+COPY public.products (index, product_id, product_name, price, user_id) FROM stdin;
+0	1	Product 1	49.99	1
+1	2	Product 2	29.99	2
+2	3	Product 3	39.99	3
+3	4	Product 4	19.99	4
+4	5	Product 5	59.99	5
+5	6	Product 6	79.99	6
+6	7	Product 7	24.99	7
+7	8	Product 8	69.99	8
+8	9	Product 9	34.99	9
+9	10	Product 10	44.99	10
+10	11	Product 11	54.99	1
+11	12	Product 12	64.99	2
+12	13	Product 13	74.99	3
+13	14	Product 14	84.99	4
+14	15	Product 15	94.99	5
+15	16	Product 16	104.99	6
+16	17	Product 17	114.99	7
+17	18	Product 18	124.99	8
+18	19	Product 19	134.99	9
+19	20	Product 20	144.99	10
+\.
+
+
+--
+-- Data for Name: sales; Type: TABLE DATA; Schema: public; Owner: lmd
+--
+
+COPY public.sales (index, sale_id, user_id, product_id, sale_date, quantity, total_price) FROM stdin;
+0	1	1	1	2023-01-01	5	249.95
+1	2	2	2	2023-01-02	3	89.97
+2	3	3	3	2023-01-03	2	79.98
+3	4	4	4	2023-01-04	7	139.93
+4	5	5	5	2023-01-05	4	239.96
+5	6	6	6	2023-01-06	1	79.99
+6	7	7	7	2023-01-07	6	149.94
+7	8	8	8	2023-01-08	3	209.97
+8	9	9	9	2023-01-09	2	69.98
+9	10	10	10	2023-01-10	8	359.92
+10	11	1	2	2023-01-11	5	149.95
+11	12	2	3	2023-01-12	4	159.96
+12	13	3	4	2023-01-13	2	39.98
+13	14	4	5	2023-01-14	6	179.94
+14	15	5	6	2023-01-15	3	239.97
+15	16	6	7	2023-01-16	4	99.96
+16	17	7	8	2023-01-17	2	69.98
+17	18	8	9	2023-01-18	7	279.93
+18	19	9	10	2023-01-19	1	49.99
+19	20	10	1	2023-01-20	3	149.97
+\.
+
+
+--
+-- Data for Name: servers; Type: TABLE DATA; Schema: public; Owner: lmd
+--
+
+COPY public.servers (index, server_id, location, status, user_id) FROM stdin;
+0	1	Jakarta	Active	1
+1	2	Bandung	Active	2
+2	3	Surabaya	Inactive	3
+3	4	Yogyakarta	Active	4
+4	5	Semarang	Inactive	5
+5	6	Medan	Active	6
+6	7	Bali	Active	7
+7	8	Makassar	Inactive	8
+8	9	Palembang	Active	9
+9	10	Balikpapan	Active	10
+10	11	Denpasar	Inactive	1
+11	12	Samarinda	Active	2
+12	13	Manado	Active	3
+13	14	Pekanbaru	Inactive	4
+14	15	Pontianak	Active	5
+15	16	Banjarmasin	Active	6
+16	17	Malang	Inactive	7
+17	18	Padang	Active	8
+18	19	Bandar Lampung	Active	9
+19	20	Ambon	Inactive	10
+\.
+
+
+--
+-- Name: langchain_pg_collection langchain_pg_collection_pkey; Type: CONSTRAINT; Schema: public; Owner: lmd
+--
+
+ALTER TABLE ONLY public.langchain_pg_collection
+    ADD CONSTRAINT langchain_pg_collection_pkey PRIMARY KEY (uuid);
+
+
+--
+-- Name: langchain_pg_embedding langchain_pg_embedding_pkey; Type: CONSTRAINT; Schema: public; Owner: lmd
+--
+
+ALTER TABLE ONLY public.langchain_pg_embedding
+    ADD CONSTRAINT langchain_pg_embedding_pkey PRIMARY KEY (uuid);
+
+
+--
+-- Name: ix_indomaret_knowledge_index; Type: INDEX; Schema: public; Owner: lmd
+--
+
+CREATE INDEX ix_indomaret_knowledge_index ON public.indomaret_knowledge USING btree (index);
+
+
+--
+-- Name: ix_lmd_knowledge_index; Type: INDEX; Schema: public; Owner: lmd
+--
+
+CREATE INDEX ix_lmd_knowledge_index ON public.lmd_knowledge USING btree (index);
+
+
+--
+-- Name: ix_products_index; Type: INDEX; Schema: public; Owner: lmd
+--
+
+CREATE INDEX ix_products_index ON public.products USING btree (index);
+
+
+--
+-- Name: ix_sales_index; Type: INDEX; Schema: public; Owner: lmd
+--
+
+CREATE INDEX ix_sales_index ON public.sales USING btree (index);
+
+
+--
+-- Name: ix_servers_index; Type: INDEX; Schema: public; Owner: lmd
+--
+
+CREATE INDEX ix_servers_index ON public.servers USING btree (index);
+
+
+--
+-- Name: langchain_pg_embedding langchain_pg_embedding_collection_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: lmd
+--
+
+ALTER TABLE ONLY public.langchain_pg_embedding
+    ADD CONSTRAINT langchain_pg_embedding_collection_id_fkey FOREIGN KEY (collection_id) REFERENCES public.langchain_pg_collection(uuid) ON DELETE CASCADE;
+
+
+--
+-- Name: SCHEMA public; Type: ACL; Schema: -; Owner: postgres
+--
+
+REVOKE USAGE ON SCHEMA public FROM PUBLIC;
+GRANT ALL ON SCHEMA public TO PUBLIC;
+
+
+--
+-- PostgreSQL database dump complete
+--
+

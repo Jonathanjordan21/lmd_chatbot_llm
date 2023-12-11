@@ -1,0 +1,27 @@
+version : '3'
+
+services:
+    postgres:
+      image: postgres:latest
+      user: postgres
+      environment:
+        - POSTGRES_PASSWORD=postgres
+      ports:
+      - '5433:5432'
+      volumes:
+        # - ./postgres/data:/var/lib/postgresql/data  # Mount volume for PostgreSQL data
+        - ./postgres/init-scripts:/docker-entrypoint-initdb.d  # Mount volume for initialization scripts
+      healthcheck:
+        test: [ "CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}" ]
+      restart: always
+    
+    redis:
+      image: redis/redis-stack
+      ports:
+      - '6379:6379'
+      volumes:
+      - ./redis-data:/data
+
+  # Add any other services or configurations as needed
+
+
