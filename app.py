@@ -56,6 +56,9 @@ sql_llm = HuggingFacePipeline.from_model_id(
     pipeline_kwargs={"max_new_tokens": 30},
 )
 
+
+
+
 # conn_url = os.environ['conn_url']
 # redis_url = os.environ['redis_url']
 
@@ -78,22 +81,10 @@ def update_knowledge():
 
         naming = f"{module_flag}_{tenant_name}_{socmed_type}" # redis cache naming convention format
 
-        conn = get_db_connection("postgresql://postgres:postgres@localhost:5433/lmd_db") # get db connection
-
         df = retrieve_all_data(conn, db_name) # Retrieve all data from database
 
         print(df)
 
-        # tenant_df = r.get(naming) # retrieve data from redis cache
-
-
-        # db = Redis.from_texts(
-        #     df['answer'].tolist(),
-        #     emb_model,
-        #     redis_url=redis_url,
-        #     index_name=naming,
-        # )
-        # db.write_schema(f"{naming}_schema.yaml")
         cur = conn.cursor()
         
         db = FAISS.from_texts(df['answer'].tolist(), emb_model)
@@ -102,31 +93,10 @@ def update_knowledge():
         cur.execute(f'CREATE table {naming}_embeddings(data bytea);')
         cur.execute(f'INSERT INTO {naming}_embeddings (data) values ({psycopg2.Binary(db.serialize_to_bytes())})')
         conn.commit()
-        # db.save_local(naming)
-
-        # check whether dataframe is available or not in redis cache
-        # if tenant_df == None:
-        #     print("tenant none")
-            
-        #     # Embedd data
-        #     # data = transform.extract(df, desc="question", message="answer")
-        #     # corpus_embeddings = transform.embed_corpus(emb_model, data)
-        #     corpus_embeddings = emb_model.embed_documents(df['answer'].tolist())
-            
-        #     df['emb'] = corpus_embeddings.tolist() # Store corpus embeddings to dataframe
-        #     df_binary = pickle.dumps(df) # create pickle binary dataframe
-        # else :
-        #     print("tenant available")
-
-        #     new_df = eval.update_data(pickle.loads(tenant_df), df, emb_model) # compare the redis cache data with postgre data
-        #     df_binary = pickle.dumps(new_df) # create pickle binary dataframe
-
-        # r.set(naming, df_binary) # set redis pickle dataframe to redis cache 
+        
         set_llm_cache(SQLAlchemyCache(engine))
         print("Success Embedded data!")
-        
-        # conn.close()
-        
+
         return {"status": 200, "data" : {"response" : "Data successfully cached to Postgre!"}}
 
 
@@ -135,7 +105,6 @@ def update_knowledge():
 
 @app.route('/chatbot', methods=['POST'])
 def chatbot():
-    global r
     global conn
 
     if request.method == 'POST':
@@ -145,26 +114,16 @@ def chatbot():
         socmed_type = request.form["socmed_type"]
         try :
             openai_api_key = request.form["openai_api_key"]
+            llm = sql_model = ChatOpenAI(temperature=0, openai_api_key=openai_api_key)
         except :
             openai_api_key = None
-        # try :
-        #     redis_url = request.form['redis_url']
-        # except :
-        #     redis_url = "redis://localhost:6379"
 
-        # th = float(request.form["th"]) # query threshold
-
-        # try :
-        #     redis_url = request.form["redis_url"]
-        # except:
-        #     redis_url = os.environ['redis_url']
-        # try:
-        #     conn_url = request.form["conn_url"]
-        # except:
-        #     conn_url = os.environ['conn_url']
         cur = conn.cursor()
 
         naming = f"{module_flag}_{tenant_name}_{socmed_type}" # redis cache naming convention 
+
+        
+        
 
         # vecs = FAISS.load_local(naming, emb_model)
 
@@ -182,7 +141,6 @@ def chatbot():
                 embeddings=emb_model, serialized=vecs
             )
 
-        # if vecs == None: # Check whether redis cache is available or not
         except Exception as e:
             print(e)
             return {"status": 404, "detail":{"detail" : "Please cache your data in /cache_data. Make sure your knowledge data is a available in your postgre database"}}
@@ -192,21 +150,26 @@ def chatbot():
         tables = [a[0] for a in cur.fetchall() if 'knowled' not in a[0] and 'pg_' not in a[0] and '_embedd' not in a[0] and '_cache' not in a[0]]
         print(tables)
         cls_model = load_cls_chain(llm, tables)
-        llm_all = load_model_chain(vecs, llm, sql_llm, cls_model, conn, openai_api_key)
+        topic = cls_model.invoke({'question':query}).split(" ")[-1].lower()
 
-        print(cls_model.invoke({'question':query}))
+        
+
+        llm_all = load_model_chain(vecs, llm, sql_llm, topic, conn)
+
 
         res = llm_all.invoke({"question":query,"threshold":0.1,"tables":" ".join(tables)})
         
-        print(res)
-        # print(res)
-        print(type(res))
-        
-        # results = transform.decimal_to_float(cur.fetchall())
+
         try :
             print(res['out'][0])
             print(type(res['out'][0]))
             results = transform.decimal_to_float(res['out'][0])
+            table_name=topic.split(" ")[-1].lower()
+            cur.execute(f"SELECT column_name FROM information_schema.columns WHERE table_name = '{table_name}' AND table_schema = 'public';")
+            
+            col_name = cur.fetchall()
+            
+            results = [{col_n[0] : v for col_n,v in zip(col_name,res)} for res in results]
         except Exception as e:
             print(e)
             results = res

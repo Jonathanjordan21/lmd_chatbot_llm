@@ -4,7 +4,7 @@ from langchain.schema import StrOutputParser
 from langchain.chat_models import ChatOpenAI
 from operator import itemgetter
 import re
-
+from components import transform
 
 def load_cls_chain(model, tables):
   cls_chain = (
@@ -42,7 +42,7 @@ def format_docs(d):
     print(d)
     return "\n\n".join([x.page_content for x in d])
 
-def load_model_chain(vecs, model, sql_model, cls_model, conn, openai_api_key=None):
+def load_model_chain(vecs, model, sql_model, table_name, conn):
     cur = conn.cursor()
 
     template = """You are a customer service who is very careful on giving information to customers.
@@ -59,23 +59,18 @@ def load_model_chain(vecs, model, sql_model, cls_model, conn, openai_api_key=Non
     sql_template = "Question: {question}\nTable: {table_schema}\nSQL:"
     sql_prompt = PromptTemplate.from_template(sql_template)
 
-    # sql_ans_template = ""
-
-    if openai_api_key!= None:
-        llm = sql_model = ChatOpenAI(temperature=0, openai_api_key=openai_api_key)
-        # cls_model = load_cls_chain(llm)
 
     branch = RunnableBranch(
         (
-        lambda x: any([tab in x["topic"].lower() for tab in x['tables'].lower().split(' ')]),  
+        lambda x: any([tab in table_name.lower() for tab in x['tables'].lower().split(' ')]),  
         {
-            "table_schema":lambda x: find_table_schema(x, cur),
+            "table_schema":lambda x: find_table_schema(table_name, cur),
             "question" : lambda x: x['question']
         }   | sql_prompt 
             | sql_model 
             | StrOutputParser()
             | {
-                "out" : lambda x: parse_or_fix(conn, model, x, itemgetter('question'), itemgetter('table_schema')),
+                "out" : lambda x: parse_or_fix(conn, model, x, itemgetter('question'), itemgetter('table_schema'), table_name),# "table_name":lambda x: [tab for tab in x['tables'].lower().split(' ') if tab in x['topic'].lower()][0]
               }
             # | {"answer":lambda x_:"\n".join([" | ".join([str(a) for a in x]) for x in x_['out'][0]]), "orig_question":lambda x:x['out'][1]}
             # | ChatPromptTemplate.from_messages(
@@ -99,30 +94,31 @@ def load_model_chain(vecs, model, sql_model, cls_model, conn, openai_api_key=Non
 
     full_chain = {
         # "context" : lambda x:x['context'],
-        "topic" : cls_model,#load_cls_chain(model),
+        # "topic" : table_name,#load_cls_chain(model),
         "tables" : lambda x:x['tables'],
         "question": lambda x: x['question'], 
         'threshold' : lambda x: x['threshold']#, "context": lambda x : x['context']
         } | branch
     return full_chain
 
-def find_table_schema(x, cur):
-    name = [tab for tab in x['tables'].lower().split(' ') if tab in x['topic'].lower()][0]
-    cur.execute(f"SELECT column_name FROM information_schema.columns WHERE table_name = '{name}' AND table_schema = 'public';")
-    col_names = ", ".join([a[0] for a in cur.fetchall()])
-
-    return f"{name} ({col_names})"
+def find_table_schema(table_name, cur):
+    # name = [tab for tab in x['tables'].lower().split(' ') if tab in x['topic'].lower()][0]
+    # name = x['topic']
+    cur.execute(f"SELECT column_name FROM information_schema.columns WHERE table_name = '{table_name.lower()}' AND table_schema = 'public';")
+    col_names = ", ".join([f'"{a[0]}" text' for a in cur.fetchall()])
+    
+    return f"{table_name.lower()} ( {col_names} )"
 
 # def query_sql(x, cur):
     
 
 
 
-def parse_or_fix(conn, llm, text, question, table):#, question:str, table:str):
+def parse_or_fix(conn, llm, text, question, table, table_name):#, question:str, table:str):
     cur = conn.cursor()
     # pattern = re.compile(r'\bFROM\s+(\w+)')
     # print(PromptTemplate.from_template("{question} | {table}"))
-    # table_name = table.split(" ")[0]
+    
     fixing_chain = (
         ChatPromptTemplate.from_template(
             "Question: {question}\n\n"
@@ -141,9 +137,15 @@ def parse_or_fix(conn, llm, text, question, table):#, question:str, table:str):
     for _ in range(4):
         # text = pattern.sub(f'FROM {str(table).split(" (")[0]}', text)
         try:
-            print(text)
+            print(table_name)
+            print("Fixed Text : ", text)
             # cur.execute(s)
             # col_name = [x[0] for x in cur.fetchall()]
+            # new_table_name = table
+            # print(new_table_name)
+            # new_table_name = 'server'
+            text = transform.replace_aggregation_functions(text, table_name.lower())[-1]
+            # print(text)
             cur.execute(text)
 
             out = cur.fetchall()
