@@ -44,13 +44,13 @@ print("Models Loaded!")
 engine = create_engine("postgresql://postgres:postgres@localhost:5433/lmd_db")
 set_llm_cache(SQLAlchemyCache(engine))
 
-llm = HuggingFacePipeline.from_model_id(
+llm_model = HuggingFacePipeline.from_model_id(
     model_id="declare-lab/flan-alpaca-base",
     task="text2text-generation",
     pipeline_kwargs={"max_new_tokens": 50},
 )
 
-sql_llm = HuggingFacePipeline.from_model_id(
+sql_llm_model = HuggingFacePipeline.from_model_id(
     model_id="jonathanjordan21/flan-alpaca-base-finetuned-lora-wikisql",
     task="text2text-generation",
     pipeline_kwargs={"max_new_tokens": 30},
@@ -106,6 +106,8 @@ def update_knowledge():
 @app.route('/chatbot', methods=['POST'])
 def chatbot():
     global conn
+    # global llm
+    # global sql_model
 
     if request.method == 'POST':
         query = request.form["query"] # User input 
@@ -114,9 +116,14 @@ def chatbot():
         socmed_type = request.form["socmed_type"]
         try :
             openai_api_key = request.form["openai_api_key"]
-            llm = sql_model = ChatOpenAI(temperature=0, openai_api_key=openai_api_key)
+            llm = sql_llm = ChatOpenAI(temperature=0, openai_api_key=openai_api_key)
         except :
             openai_api_key = None
+            llm = llm_model
+            sql_llm = sql_llm_model
+        
+        # if openai_api_key != None:
+        #     llm = sql_model = ChatOpenAI(temperature=0, openai_api_key=openai_api_key)
 
         cur = conn.cursor()
 
