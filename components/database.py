@@ -1,6 +1,4 @@
-import redis
 import psycopg2
-import redis
 import urllib.parse as up
 import pandas as pd
 

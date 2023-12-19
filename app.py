@@ -4,7 +4,7 @@ import os
 import psycopg2
 from psycopg2.errors import UndefinedColumn
 import pickle
-import redis
+# import redis
 import pandas as pd
 import numpy as np
 import urllib.parse as up
@@ -22,11 +22,31 @@ from langchain.vectorstores.redis import Redis
 from langchain.cache import RedisSemanticCache, SQLAlchemyCache
 from langchain.globals import set_llm_cache
 from sqlalchemy import create_engine
+from langchain.llms import LlamaCpp
+# from langchain.llms import CTransformers
+import llm_chains.database, llm_chains.knowledge_base
+
+# from transformers import pipeline, AutoModelForSeq2Seq, AutoTokenizer
 
 import psycopg2
 from psycopg2 import sql
 
 app = Flask(__name__) # Initialize Flask App
+
+id2en = HuggingFacePipeline.from_model_id(
+    model_id="Helsinki-NLP/opus-mt-id-en",
+    # model_id="jonathanjordan21/mt5-base-finetuned-lora-LaMini-instruction",
+    task="text2text-generation",
+    # pipeline_kwargs={"temperature":0.},
+)
+
+en2id = HuggingFacePipeline.from_model_id(
+    model_id="Helsinki-NLP/opus-mt-en-id",
+    # resume_download=True,
+    # model_id="jonathanjordan21/mt5-base-finetuned-lora-LaMini-instruction",
+    task="text2text-generation",
+    # pipeline_kwargs={"temperature":0.},
+)
 
 # app.template_folder = os.path.join('..', 'templates') # Reference templates folder in parent directory
 
@@ -34,6 +54,26 @@ app = Flask(__name__) # Initialize Flask App
 # tokenizer, alpaca_model = model.load_alpaca_model()
 # id2en = model.load_id2en_model()
 # llm = model.load_llm_model() # Initialize llm model
+
+sql_llm_model = HuggingFacePipeline.from_model_id(
+    # model_id="jonathanjordan21/flan-alpaca-base-finetuned-lora-wikisql",
+    model_id ="jonathanjordan21/mt5-base-finetuned-lora-sql",
+    task="text2text-generation",
+    pipeline_kwargs={"max_new_tokens": 60,"temperature":0.},
+)
+
+# sql_llm_model = LlamaCpp(
+#     model_path=os.path.join("\\",*"\\Users\\jonat\\.cache\\huggingface\\hub\\models--TheBloke--stablelm-zephyr-3b-GGUF\\blobs\\74b2613b6e89d904a2ea38d56d233e4d2ca2fe663844b2e7aa90e769d359061b".split("\\")),
+#     # temperature=0.75,
+#     max_tokens=60,
+#     top_p=1,
+# )
+
+# sql_llm_model = CTransformers(
+#     model="C:\\Users\\jonat\\.cache\\huggingface\\hub\\models--TheBloke--TinyLlama-1.1B-Chat-v0.3-GGUF\\snapshots\\b32046744d93031a26c8e925de2c8932c305f7b9\\tinyllama-1.1b-chat-v0.3.Q4_K_M.gguf",
+#     config = {'max_new_tokens': 256, 'repetition_penalty': 1.1}
+
+# )
 
 
 
@@ -46,18 +86,12 @@ set_llm_cache(SQLAlchemyCache(engine))
 
 llm_model = HuggingFacePipeline.from_model_id(
     model_id="declare-lab/flan-alpaca-base",
+    # model_id="jonathanjordan21/mt5-base-finetuned-lora-LaMini-instruction",
     task="text2text-generation",
-    pipeline_kwargs={"max_new_tokens": 50},
+    pipeline_kwargs={"max_new_tokens": 60}#, "temperature":0.},
 )
 
-sql_llm_model = HuggingFacePipeline.from_model_id(
-    model_id="jonathanjordan21/flan-alpaca-base-finetuned-lora-wikisql",
-    task="text2text-generation",
-    pipeline_kwargs={"max_new_tokens": 30},
-)
-
-
-
+# llm_model = sql_llm_model
 
 # conn_url = os.environ['conn_url']
 # redis_url = os.environ['redis_url']
@@ -66,6 +100,13 @@ sql_llm_model = HuggingFacePipeline.from_model_id(
 
 # conn = get_db_connection(conn_url)
 conn = get_db_connection("postgresql://postgres:postgres@localhost:5433/lmd_db")
+
+db_chain = llm_chains.database.load_model_chain(llm_model, sql_llm_model, conn)#.with_fallbacks([llm_chains.knowledge_base.load_model_chain(llm_model, emb_model, conn)])
+knowledge_chain = llm_chains.knowledge_base.load_model_chain(
+    llm_model, emb_model, id2en, en2id, 
+    conn
+)#.with_fallbacks([llm_chains.database.load_model_chain(llm_model, sql_llm_model, conn)])
+
 
 
 
@@ -170,13 +211,19 @@ def chatbot():
         try :
             print(res['out'][0])
             print(type(res['out'][0]))
-            results = transform.decimal_to_float(res['out'][0])
-            table_name=topic.split(" ")[-1].lower()
-            cur.execute(f"SELECT column_name FROM information_schema.columns WHERE table_name = '{table_name}' AND table_schema = 'public';")
-            
-            col_name = cur.fetchall()
-            
-            results = [{col_n[0] : v for col_n,v in zip(col_name,res)} for res in results]
+            res, agg = res['out']
+            print(agg)
+            if agg == None:
+                results = transform.decimal_to_float(res)
+                table_name=topic.split(" ")[-1].lower()
+                cur.execute(f"SELECT column_name FROM information_schema.columns WHERE table_name = '{table_name}' AND table_schema = 'public';")
+                
+                col_name = cur.fetchall()
+                
+                results = [{col_n[0] : v for col_n,v in zip(col_name,res)} for res in results]
+            else :
+                results = llm(f"""Generate final response based on the following question and the answer\n\nQUESTION:\n{query}\n\nANSWER:\n{agg}:{' '.join([str(x[0]) for x in res])}""")
+                print(results)
         except Exception as e:
             print(e)
             results = res
@@ -186,7 +233,81 @@ def chatbot():
             # "tag_score" : float(tag['scores'][0]),
             # "q_score" : float(q_score)
         }}
+
+
+
+
+
+
+def transform_output(res, cur,question, model):
+    res, agg,table_name = res
+    cur = conn.cursor()
+    if agg == None:
+        results = transform.decimal_to_float(res)
+        table_name = table_name.replace('"', "")
+        cur.execute(f"SELECT column_name FROM information_schema.columns WHERE table_name = '{table_name}' AND table_schema = 'public';")
+        
+        col_name = cur.fetchall()
+        
+        print(col_name)
+        results = [{col_n[0] : v for col_n,v in zip(col_name,res)} for res in results]
+
+        return results
+
+        # res = [" | ".join([f"{col_n[0]} : {v}" for col_n,v in zip(col_name,res)]) for res in results]
+        # print(res)
     
+    # results = llm(f"""Generate final response based on the following question and the answer\n\nQUESTION:\n{query}\n\nANSWER:\n{agg}:{' '.join([str(x[0]) for x in res])}""")
+    # print(results)
+    # s = "\n"
+    else :
+        answer = '\n'.join([str(x[0]) for x in res]) 
+        prompt = PromptTemplate.from_template("Generate final response based on the below question and the answer\n\nQUESTION:\n{query}\n\n"+f"ANSWER:\n{answer}")
+
+        return (prompt | model | en2id).invoke({"query":question, "answer":answer})
+
+
+@app.route('/chatbot_choose', methods=['POST'])
+def chatbot_choose():
+    global conn
+
+    query = request.form["query"] # User input 
+    tenant_name = request.form["tenant_name"]
+    module_flag = request.form["module_flag"]
+    socmed_type = request.form["socmed_type"]
+    data_source = request.form['data_source']
+    try :
+        openai_api_key = request.form["openai_api_key"]
+        llm = sql_llm = ChatOpenAI(temperature=0, openai_api_key=openai_api_key)
+    except :
+        openai_api_key = None
+        llm = llm_model
+        sql_llm = sql_llm_model
+
+    
+    naming = f"{module_flag}_{tenant_name}_{socmed_type}"
+    
+    cur = conn.cursor()
+
+    if data_source == 'database':
+        try :
+            out = db_chain.invoke({"question":query, "naming":naming})
+            out = transform_output(out['out'], cur,query, llm)
+        except Exception as e:
+            print(e)
+            out = knowledge_chain.invoke({"question":query,'naming':naming})
+    else :
+        try :
+            out = knowledge_chain.invoke({"question":query,'naming':naming})
+        except Exception as e :
+            print(e)
+            out = db_chain.invoke({"question":query, "naming":naming})
+            out = transform_output(out['out'], cur,query, llm)
+    
+    return { "status" : 200, "data" : {"response":out} }
+
+
+
 
 @app.route('/delete', methods=['POST'])
 def delete_cache():

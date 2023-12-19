@@ -10,3 +10,4 @@ sentencepiece
 sqlalchemy
 psycopg2
 redis
+sacremoses

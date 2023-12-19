@@ -3,7 +3,7 @@ import re
 
 def decimal_to_float(obj):
     if isinstance(obj, Decimal):
-        return float(obj)
+        return round(float(obj),2)
     elif isinstance(obj, list):
         return [decimal_to_float(item) for item in obj]
     elif isinstance(obj, tuple):

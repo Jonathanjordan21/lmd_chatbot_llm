@@ -104,10 +104,22 @@ def load_model_chain(vecs, model, sql_model, table_name, conn):
 def find_table_schema(table_name, cur):
     # name = [tab for tab in x['tables'].lower().split(' ') if tab in x['topic'].lower()][0]
     # name = x['topic']
-    cur.execute(f"SELECT column_name FROM information_schema.columns WHERE table_name = '{table_name.lower()}' AND table_schema = 'public';")
-    col_names = ", ".join([f'"{a[0]}" text' for a in cur.fetchall()])
+    cur.execute(f"SELECT column_name, data_type FROM information_schema.columns WHERE table_name = '{table_name.lower()}' AND table_schema = 'public';")
+    col, d  = zip(*cur.fetchall())
+    d = [x if x[:2] == 'te' or x[:2] =='da' else 'real' for x in d]
+    # print(d)
+    # for i,x in enumerate(d):
+    #     x = x.lower()
+    #     if 'tex' in x or 'va' in x or 'da' in x:
+    #         d[i] = 'text'
+    #     else :
+    #         d[i] = 'real'
+    print(d)
+    col_names = ", ".join([f'"{a}" {b}' for a,b in zip(col,d)])
+
+    print(col_names)
     
-    return f"{table_name.lower()} ( {col_names} )"
+    return f'{table_name.lower()} ( {col_names} )'
 
 # def query_sql(x, cur):
     
@@ -134,28 +146,35 @@ def parse_or_fix(conn, llm, text, question, table, table_name):#, question:str, 
     )
 
     e_ = None
+    sql_agg = ['AVG', 'MAX', 'MIN', 'COUNT', 'SUM'] 
     for _ in range(4):
         # text = pattern.sub(f'FROM {str(table).split(" (")[0]}', text)
         try:
             print(table_name)
             print("Fixed Text : ", text)
-            # cur.execute(s)
-            # col_name = [x[0] for x in cur.fetchall()]
-            # new_table_name = table
-            # print(new_table_name)
-            # new_table_name = 'server'
-            text = transform.replace_aggregation_functions(text, table_name.lower())[-1]
+
+            agg = None 
+            for x in sql_agg:
+                if x in text:
+                    agg = x
+                    break
+
+            if agg == None:
+                text = transform.replace_aggregation_functions(text, table_name.lower())[-1]
+            
+            
             # print(text)
+
             cur.execute(text)
 
             out = cur.fetchall()
-            print(out)
-            if len(out) == 0:
-                raise Exception("The result is empty! Try other way, for example try to change the string value")
+            # print(out)
+            # if len(out) == 0:
+            #     raise Exception("The result is empty! Try other way, for example try to change the string value")
             # out = "\n".join([" | ".join([str(a) for a in x]) for x in out])
             # print(out)
             # print(type(out))
-            return out,question
+            return out,agg
         except Exception as e:
             conn.commit()
             text = fixing_chain.invoke({"input": text, "error": e, "question":question, "table":table})
