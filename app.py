@@ -22,6 +22,7 @@ from langchain.vectorstores.redis import Redis
 from langchain.cache import RedisSemanticCache, SQLAlchemyCache
 from langchain.globals import set_llm_cache
 from sqlalchemy import create_engine
+from langchain.chat_models import ChatOpenAI
 # from langchain.llms import LlamaCpp
 # from langchain.llms import CTransformers
 import llm_chains.database, llm_chains.knowledge_base
