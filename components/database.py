@@ -2,19 +2,20 @@ import psycopg2
 import urllib.parse as up
 import pandas as pd
 
-def get_db_connection(conn_url):
+def get_db_connection(conn_url, password=None):
     # conn = psycopg2.connect(
     #     user="postgres",  # Replace with your PostgreSQL username
     #     host="localhost",
     #     database="lmd_db",  # Replace with your database name
     #     port="5432",
     # )
-
+    
     url = up.urlparse(conn_url)
+
     conn = psycopg2.connect(
         database=url.path[1:],
         user=url.username,
-        password=url.password,
+        password=password if password is not None else url.password,
         host=url.hostname,
         port=url.port
     )
@@ -46,13 +47,13 @@ def retrieve_all_data(conn, db_name):
     return df
 
 
-def get_redis_connection(redis_url, ssl=True):
-    url = up.urlparse(redis_url)
-    r = redis.Redis(
-        password=url.password,
-        host=url.hostname,
-        port=url.port, ssl=ssl
-    )
+# def get_redis_connection(redis_url, ssl=True):
+#     url = up.urlparse(redis_url)
+#     r = redis.Redis(
+#         password=url.password,
+#         host=url.hostname,
+#         port=url.port, ssl=ssl
+#     )
 
-    print("Connection to Redis successful!")
-    return r
+#     print("Connection to Redis successful!")
+#     return r

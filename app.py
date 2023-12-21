@@ -34,28 +34,21 @@ from psycopg2 import sql
 
 app = Flask(__name__) # Initialize Flask App
 
+
+# Initialize Translation Model
 id2en = HuggingFacePipeline.from_model_id(
     model_id="Helsinki-NLP/opus-mt-id-en",
-    # model_id="jonathanjordan21/mt5-base-finetuned-lora-LaMini-instruction",
     task="text2text-generation",
     # pipeline_kwargs={"temperature":0.},
 )
 
 en2id = HuggingFacePipeline.from_model_id(
     model_id="Helsinki-NLP/opus-mt-en-id",
-    # resume_download=True,
-    # model_id="jonathanjordan21/mt5-base-finetuned-lora-LaMini-instruction",
     task="text2text-generation",
     # pipeline_kwargs={"temperature":0.},
 )
 
-# app.template_folder = os.path.join('..', 'templates') # Reference templates folder in parent directory
-
-# emb_tokenizer, emb_model = model.load_emb_model() # initialize embedding 
-# tokenizer, alpaca_model = model.load_alpaca_model()
-# id2en = model.load_id2en_model()
-# llm = model.load_llm_model() # Initialize llm model
-
+# Initialize Finetuned LLM Model for SQL generation 
 sql_llm_model = HuggingFacePipeline.from_model_id(
     # model_id="jonathanjordan21/flan-alpaca-base-finetuned-lora-wikisql",
     model_id ="jonathanjordan21/mt5-base-finetuned-lora-sql",
@@ -73,35 +66,34 @@ sql_llm_model = HuggingFacePipeline.from_model_id(
 # sql_llm_model = CTransformers(
 #     model="C:\\Users\\jonat\\.cache\\huggingface\\hub\\models--TheBloke--TinyLlama-1.1B-Chat-v0.3-GGUF\\snapshots\\b32046744d93031a26c8e925de2c8932c305f7b9\\tinyllama-1.1b-chat-v0.3.Q4_K_M.gguf",
 #     config = {'max_new_tokens': 256, 'repetition_penalty': 1.1}
-
 # )
 
 
-
-emb_model = HuggingFaceEmbeddings(model_name='sentence-transformers/paraphrase-multilingual-mpnet-base-v2', encode_kwargs={'normalize_embeddings': True})
-
-print("Models Loaded!")
-# set_llm_cache(RedisSemanticCache(redis_url="redis://localhost:6379", embedding=emb_model))
-engine = create_engine("postgresql://postgres:postgres@localhost:5433/lmd_db")
-set_llm_cache(SQLAlchemyCache(engine))
-
+# Initialize LLM Model for Retrieval Augmented Generation (RAG) of Knowledge-base
 llm_model = HuggingFacePipeline.from_model_id(
     model_id="declare-lab/flan-alpaca-base",
     # model_id="jonathanjordan21/mt5-base-finetuned-lora-LaMini-instruction",
     task="text2text-generation",
-    pipeline_kwargs={"max_new_tokens": 60}#, "temperature":0.},
+    pipeline_kwargs={"max_new_tokens": 256}#, "temperature":0.},
 )
 
 # llm_model = sql_llm_model
 
-# conn_url = os.environ['conn_url']
-# redis_url = os.environ['redis_url']
+
+# Initialize Embedding Model
+emb_model = HuggingFaceEmbeddings(model_name='sentence-transformers/paraphrase-multilingual-mpnet-base-v2', encode_kwargs={'normalize_embeddings': True})
+
+## set_llm_cache(RedisSemanticCache(redis_url="redis://localhost:6379", embedding=emb_model)) # Redis LLM Semantic Cache
+
+engine = create_engine("postgresql://postgres:postgres@localhost:5433/lmd_db")  
+set_llm_cache(SQLAlchemyCache(engine)) # Postgre LLM Cache
 
 # r = get_redis_connection(redis_url) # Initialize redis connection
 
-# conn = get_db_connection(conn_url)
-conn = get_db_connection("postgresql://postgres:postgres@localhost:5433/lmd_db")
+conn = get_db_connection("postgresql://postgres:postgres@localhost:5433/lmd_db", password=None) # Change password if it contains `@`
 
+
+# Initialize LLM chain for Database and Knowledge-base
 db_chain = llm_chains.database.load_model_chain(llm_model, sql_llm_model, conn)#.with_fallbacks([llm_chains.knowledge_base.load_model_chain(llm_model, emb_model, conn)])
 knowledge_chain = llm_chains.knowledge_base.load_model_chain(
     llm_model, emb_model, id2en, en2id, 
@@ -199,16 +191,15 @@ def chatbot():
         tables = [a[0] for a in cur.fetchall() if 'knowled' not in a[0] and 'pg_' not in a[0] and '_embedd' not in a[0] and '_cache' not in a[0]]
         print(tables)
         cls_model = load_cls_chain(llm, tables)
-        topic = cls_model.invoke({'question':query}).split(" ")[-1].lower()
 
-        
+        query = id2en(query)
+
+        topic = cls_model.invoke({'question':query}).split(" ")[-1].lower()
 
         llm_all = load_model_chain(vecs, llm, sql_llm, topic, conn)
 
-
         res = llm_all.invoke({"question":query,"threshold":0.1,"tables":" ".join(tables)})
         
-
         try :
             print(res['out'][0])
             print(type(res['out'][0]))
@@ -224,10 +215,11 @@ def chatbot():
                 results = [{col_n[0] : v for col_n,v in zip(col_name,res)} for res in results]
             else :
                 results = llm(f"""Generate final response based on the following question and the answer\n\nQUESTION:\n{query}\n\nANSWER:\n{agg}:{' '.join([str(x[0]) for x in res])}""")
+                results = en2id(results)
                 print(results)
         except Exception as e:
             print(e)
-            results = res
+            results = en2id(res)
 
         return {"status" : 200, "data" : {
             "response":results, 
@@ -276,7 +268,7 @@ def chatbot_choose():
     tenant_name = request.form["tenant_name"]
     module_flag = request.form["module_flag"]
     socmed_type = request.form["socmed_type"]
-    data_source = request.form['data_source']
+    data_source = request.form['data_source'] # Data source (knowledge / database)
     try :
         openai_api_key = request.form["openai_api_key"]
         llm = sql_llm = ChatOpenAI(temperature=0, openai_api_key=openai_api_key)
