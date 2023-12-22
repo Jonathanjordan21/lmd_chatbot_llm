@@ -58,5 +58,8 @@ The required parameters are :
 4. Chatbot return error response because the generated SQL syntax is error due to either unavailable data in the Database or bad SQL syntax
 5. Chatbot generate response "I don't know" because the Chatbot cannot understand the knowledge-base
 
+## PostgreSQL Database
+In `app.py` Line 92, change `password=None` to PostgreSQL password if the password contains `@`
+
 
 
