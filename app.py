@@ -70,11 +70,17 @@ sql_llm_model = HuggingFacePipeline.from_model_id(
 
 
 # Initialize LLM Model for Retrieval Augmented Generation (RAG) of Knowledge-base
+# llm_model = HuggingFacePipeline.from_model_id(
+#     model_id="declare-lab/flan-alpaca-base",
+#     # model_id="jonathanjordan21/mt5-base-finetuned-lora-LaMini-instruction",
+#     task="text2text-generation",
+#     pipeline_kwargs={"max_new_tokens": 256}#, "temperature":0.},
+# )
+
 llm_model = HuggingFacePipeline.from_model_id(
-    model_id="declare-lab/flan-alpaca-base",
-    # model_id="jonathanjordan21/mt5-base-finetuned-lora-LaMini-instruction",
+    model_id="Narrativa/mT5-base-finetuned-tydiQA-xqa",
     task="text2text-generation",
-    pipeline_kwargs={"max_new_tokens": 256}#, "temperature":0.},
+    pipeline_kwargs={"max_new_tokens":512},
 )
 
 # llm_model = sql_llm_model
@@ -96,7 +102,7 @@ conn = get_db_connection("postgresql://postgres:postgres@localhost:5433/lmd_db",
 # Initialize LLM chain for Database and Knowledge-base
 db_chain = llm_chains.database.load_model_chain(llm_model, sql_llm_model, conn)#.with_fallbacks([llm_chains.knowledge_base.load_model_chain(llm_model, emb_model, conn)])
 knowledge_chain = llm_chains.knowledge_base.load_model_chain(
-    llm_model, emb_model, id2en, en2id, 
+    llm_model, emb_model, #id2en, en2id, 
     conn
 )#.with_fallbacks([llm_chains.database.load_model_chain(llm_model, sql_llm_model, conn)])
 

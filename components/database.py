@@ -47,6 +47,29 @@ def retrieve_all_data(conn, db_name):
     return df
 
 
+def get_table_column(cur, table_name, schema):
+    cur.execute(f"SELECT column_name, data_type FROM information_schema.columns WHERE table_name = '{table_name}' AND table_schema = '{schema}';")
+    col, d  = zip(*cur.fetchall())
+    d = [x if x[:2] == 'te' or x[:2] =='da' else 'real' for x in d]
+    
+    col_names = ", ".join([f'"{a}" {b}' for a,b in zip(col,d)])
+
+    return f""" CREATE TABLE {table_name} ( {col_names} )"""
+
+def retrieve_fast_sql(conn, schema):
+    cur = conn.cursor()
+
+    cur.execute(f"SELECT table_name FROM information_schema.tables WHERE table_schema = '{schema}';")
+
+    tables = [a[0] for a in cur.fetchall() if 'knowled' not in a[0] and 'pg_' not in a[0] and '_embedd' not in a[0] and '_cache' not in a[0]]
+
+    table_str = ""
+    for table_name in tables:
+        table_str += get_table_column(cur, table_name, schema)
+
+    return "tables:\n"+table_str[1:]+"\nquery for: "
+
+
 # def get_redis_connection(redis_url, ssl=True):
 #     url = up.urlparse(redis_url)
 #     r = redis.Redis(

@@ -192,3 +192,40 @@ def parse_or_fix(conn, llm, text, question, table):#, question:str, table:str):
             text = fixing_chain.invoke({"input": text, "error": e, "question":question, "table":table})
             e_ = e
     raise e_
+
+
+
+
+def load_model_chain_large(model, sql_model, conn):
+    cur = conn.cursor()
+
+    sql_template = "Generate SQL query based on the following Question and Table\nQuestion: {sql_question}\nTable: {table_schema}\nSQL:"
+    sql_prompt = PromptTemplate.from_template(sql_template)
+
+    gen_prompt = PromptTemplate.from_template("Generate final response based on the following question and the answer\n\nQUESTION:\n{question}\n\nANSWER:\n{answer}")
+
+    full_chain = ( 
+        {
+            "table_schema":lambda x : find_table_schema(cur, x['question'], model), 
+            "sql_question" : lambda x: x['question']
+        } 
+        | sql_prompt 
+        | sql_model 
+        | StrOutputParser()
+        | {
+            
+            "out" : lambda x: parse_or_fix(conn, model, x, itemgetter('sql_question'), itemgetter('table_schema')),# "table_name":lambda x: [tab for tab in x['tables'].lower().split(' ') if tab in x['topic'].lower()][0]
+            # "question" : lambda x: itemgetter('question')
+            # "question_last": lambda x: itemgetter('question'),# | RunnableLambda(gen_q),
+            
+            }
+        # | {"answer" : lambda x:transform_output(x['out'], cur, itemgetter('question'),model)}
+        # | RunnableLambda(lambda x:x['answer'])
+        ## | {"answer": lambda x:transform_output(x['out'], cur)}
+        ## | gen_prompt
+        ## | {"result" : model.invoke({"question":itemgetter('question')})}
+        ## | RunnableLambda(lambda x:x['result'])
+        ## | StrOutputParser()
+    )
+    
+    return full_chain

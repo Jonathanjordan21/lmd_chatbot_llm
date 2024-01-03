@@ -12,3 +12,6 @@ psycopg2
 redis
 sacremoses
 peft
+langchain-google-genai
+unstructured
+unstructured[pdf]
