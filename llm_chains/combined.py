@@ -67,6 +67,19 @@ def format_docs(d):
     return "\n\n".join([x.page_content for x in d])
 
 
+def run_sql(text, x, cur):
+    x = x.split("WHERE")
+    x[1] = x[1].replace('"',"'")
+    x = " ".join(x)
+    print(x)
+
+    cur.execute(x)
+
+    out = cur.fetchall()
+
+    return f"""SQL query syntax: {text}\n\nDatabase query result: {out}"""
+
+
 
 
 def load_model_chain_phi2(llm, emb_model, conn, memory_chain=None):
@@ -174,6 +187,57 @@ def load_model_chain_large(llm, emb_model, conn, memory_chain=None):
         input_messages_key="question",
         history_messages_key='history',
     )
+
+
+
+
+
+def load_model_chain_base(llm, emb_model, sql_llm, conn, memory_chain=None):
+
+    template = """You are a helpful and informative AI customer service assistant. Always remember to thank the customer when they say thank you and greet them when they greet you.
+
+    You have access to the following context of knowledge base and internal resources to find the most relevant information for the customer's needs:
+
+    {context}
+    
+
+
+    Always prioritize the following result of database query to find the most relevant information for the customer's needs:
+
+    Database Tables Schema:
+    {table_schema}
+
+    {table}"""
+    
+
+    ANSWER_PROMPT = ChatPromptTemplate.from_messages(
+        [
+            ("system", template), MessagesPlaceholder(variable_name='history'), ("human", "{question}")
+        ]
+    )
+
+
+    db_prompt = PromptTemplate.from_template("""{table_schema}{question}""") # Fast SQL model prompt
+    
+    # db_prompt = PromptTemplate.from_template("""Question: {question}\nTable: {table_schema}\nSQL:""") # MT-5 / Flan Alpaca Model Prompt
+
+
+    full_chain = RunnablePassthrough.assign(table_schema=lambda x: retrieve_fast_sql(x['schema'],conn.cursor())) | {
+        "context" : lambda x: check_threshold(x, conn.cursor(), emb_model),
+        "question" : lambda x: x['question'],
+        "table": {"out":db_prompt | sql_llm | StrOutputParser(), "question":lambda x:x['question']} | RunnableLambda(lambda x: run_sql(x['question'], x['out'],conn.cursor())),
+        "history":itemgetter('history'), 
+        "table_schema":itemgetter('table_schema')
+        } | ANSWER_PROMPT | llm
+
+
+    return RunnableWithMessageHistory(
+        full_chain,
+        lambda session_id : RedisChatMessageHistory(session_id),
+        input_messages_key="question",
+        history_messages_key='history',
+    )
+
 
 
 
@@ -381,3 +445,27 @@ def parse_or_fix_phi2(conn, llm, text, question, table):#, question:str, table:s
             text = fixing_chain.invoke({"input": text, "error": e, "question":question, "table":table})
             e_ = e
     return ""
+
+
+
+def get_table_column(cur, table_name, schema):
+    cur.execute(f"SELECT column_name, data_type FROM information_schema.columns WHERE table_name = '{table_name}' AND table_schema = '{schema}';")
+    col, d  = zip(*cur.fetchall())
+    d = [x if x[:2] == 'te' or x[:2] =='da' else 'real' for x in d]
+    
+    col_names = ", ".join([f'"{a}" {b}' for a,b in zip(col,d)])
+
+    return f""" CREATE TABLE {table_name} ( {col_names} )"""
+
+def retrieve_fast_sql(schema, conn):
+    cur = conn.cursor()
+
+    cur.execute(f"SELECT table_name FROM information_schema.tables WHERE table_schema = '{schema}';")
+
+    tables = [a[0] for a in cur.fetchall() if 'knowled' not in a[0] and 'pg_' not in a[0] and '_embedd' not in a[0] and '_cache' not in a[0]]
+
+    table_str = ""
+    for table_name in tables:
+        table_str += get_table_column(cur, table_name, schema)
+
+    return "tables:\n"+table_str[1:]+"\nquery for: "

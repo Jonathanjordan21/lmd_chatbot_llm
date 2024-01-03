@@ -33,7 +33,10 @@ from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain.memory import ConversationBufferMemory,ConversationBufferWindowMemory
 from langchain.memory import RedisChatMessageHistory
 from langchain.document_loaders import UnstructuredFileLoader
-import os
+from langchain_community.document_loaders import DirectoryLoader
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+
+import os, shutil
 from dotenv import load_dotenv
 from tempfile import NamedTemporaryFile
 
@@ -99,6 +102,62 @@ conn = get_db_connection(os.environ['POSTGRE_URL'], password=os.environ.get('POS
 # )#.with_fallbacks([llm_chains.database.load_model_chain(llm_model, sql_llm_model, conn)])
 
 llm_chain = llm_chains.combined.load_model_chain_phi2(llm,emb_model,conn)
+
+
+
+
+@app.route('/cache_data_file', methods=['POST'])
+def update_knowledge_file():
+    tenant_name = request.form["tenant_name"]
+    module_flag = request.form["module_flag"]
+    socmed_type = request.form["socmed_type"]
+    # redis_url = request.form['redis_url']
+    file_save = request.files.getlist("file")
+    # db_name = request.form["table_name"] # Name of PostgreSQL table where knowledge base is stored in ["question", "answer"] format
+    # print(file_save)
+    # print([x for x in file_save])
+    # 1/0
+
+    if len(file_save) < 1:
+        raise Exception("Error! No File Given")
+
+    naming = f"{module_flag}_{tenant_name}_{socmed_type}" 
+
+    # with NamedTemporaryFile() as temp:
+    #     file_save.save(temp)
+    #     temp.seek(0)
+    #     loader = UnstructuredFileLoader(temp.name, mode='elements').load()
+
+    os.makedirs("temp", exist_ok=True)
+    
+    for i,x in enumerate(file_save):
+        x.save(os.path.join("temp",naming+f"_{i}"))
+
+    loader = DirectoryLoader('temp', use_multithreading=True).load()
+
+    shutil.rmtree('temp', ignore_errors=True)
+
+    splitter = RecursiveCharacterTextSplitter(chunk_size=512, chunk_overlap=20)
+
+    docs = splitter.split_documents(loader)
+
+    print(docs)
+
+    db = FAISS.from_documents(docs, emb_model)
+
+    cur = conn.cursor()
+
+    cur.execute(f'DROP TABLE IF EXISTS {naming}_embeddings;')
+    cur.execute(f'CREATE table {naming}_embeddings(data bytea);')
+    cur.execute(f'INSERT INTO {naming}_embeddings (data) values ({psycopg2.Binary(db.serialize_to_bytes())})')
+    conn.commit()
+    
+    # set_llm_cache(SQLAlchemyCache(engine))
+    print("Success Embedded data!")
+
+    return {"status": 200, "data" : {"response" : f"Data successfully cached to Postgre in {naming}_embeddings table!"}}
+
+
 
 
 @app.route('/cache_data_file', methods=['POST'])
@@ -176,7 +235,7 @@ def update_knowledge():
 
 
 
-@app.route('/chatbot_choose', methods=['POST'])
+@app.route('/chatbot_combined', methods=['POST'])
 def chatbot_choose():
     global conn
 
@@ -184,10 +243,9 @@ def chatbot_choose():
     tenant_name = request.form["tenant_name"]
     module_flag = request.form["module_flag"]
     socmed_type = request.form["socmed_type"]
-    data_source = request.form['data_source'] # Data source (knowledge / database)
+    # data_source = request.form['data_source'] # Data source (knowledge / database)
 
     user_id = request.form['user_id']
-
     schema = request.form['schema']
 
     

@@ -25,7 +25,12 @@ from sqlalchemy import create_engine
 from langchain.chat_models import ChatOpenAI
 # from langchain.llms import LlamaCpp
 # from langchain.llms import CTransformers
-import llm_chains.database, llm_chains.knowledge_base
+from langchain_core.messages import AIMessage, HumanMessage
+from langchain.memory import ConversationBufferMemory,ConversationBufferWindowMemory
+from langchain.memory import RedisChatMessageHistory
+import llm_chains.database, llm_chains.knowledge_base, llm_chains.combined
+from langchain_community.document_loaders import DirectoryLoader
+from langchain.text_splitter import RecursiveCharacterTextSplitter
 
 # from transformers import pipeline, AutoModelForSeq2Seq, AutoTokenizer
 
@@ -49,39 +54,35 @@ en2id = HuggingFacePipeline.from_model_id(
 )
 
 # Initialize Finetuned LLM Model for SQL generation 
+# sql_llm_model = HuggingFacePipeline.from_model_id(
+#     # model_id="jonathanjordan21/flan-alpaca-base-finetuned-lora-wikisql",
+#     model_id ="jonathanjordan21/mt5-base-finetuned-lora-sql",
+#     task="text2text-generation",
+#     pipeline_kwargs={"max_new_tokens": 60,"temperature":0.},
+# )
+
 sql_llm_model = HuggingFacePipeline.from_model_id(
     # model_id="jonathanjordan21/flan-alpaca-base-finetuned-lora-wikisql",
-    model_id ="jonathanjordan21/mt5-base-finetuned-lora-sql",
+    model_id ="cssupport/t5-small-awesome-text-to-sql",
     task="text2text-generation",
-    pipeline_kwargs={"max_new_tokens": 60,"temperature":0.},
+    pipeline_kwargs={"max_new_tokens": 512}
+    # pipeline_kwargs={"max_new_tokens": 256,"temperature":0.},
 )
-
-# sql_llm_model = LlamaCpp(
-#     model_path=os.path.join("\\",*"\\Users\\jonat\\.cache\\huggingface\\hub\\models--TheBloke--stablelm-zephyr-3b-GGUF\\blobs\\74b2613b6e89d904a2ea38d56d233e4d2ca2fe663844b2e7aa90e769d359061b".split("\\")),
-#     # temperature=0.75,
-#     max_tokens=60,
-#     top_p=1,
-# )
-
-# sql_llm_model = CTransformers(
-#     model="C:\\Users\\jonat\\.cache\\huggingface\\hub\\models--TheBloke--TinyLlama-1.1B-Chat-v0.3-GGUF\\snapshots\\b32046744d93031a26c8e925de2c8932c305f7b9\\tinyllama-1.1b-chat-v0.3.Q4_K_M.gguf",
-#     config = {'max_new_tokens': 256, 'repetition_penalty': 1.1}
-# )
 
 
 # Initialize LLM Model for Retrieval Augmented Generation (RAG) of Knowledge-base
-# llm_model = HuggingFacePipeline.from_model_id(
-#     model_id="declare-lab/flan-alpaca-base",
-#     # model_id="jonathanjordan21/mt5-base-finetuned-lora-LaMini-instruction",
-#     task="text2text-generation",
-#     pipeline_kwargs={"max_new_tokens": 256}#, "temperature":0.},
-# )
-
 llm_model = HuggingFacePipeline.from_model_id(
-    model_id="Narrativa/mT5-base-finetuned-tydiQA-xqa",
+    model_id="declare-lab/flan-alpaca-base",
+    # model_id="jonathanjordan21/mt5-base-finetuned-lora-LaMini-instruction",
     task="text2text-generation",
-    pipeline_kwargs={"max_new_tokens":512},
+    pipeline_kwargs={"max_new_tokens": 256}#, "temperature":0.},
 )
+
+# llm_model = HuggingFacePipeline.from_model_id(
+#     model_id="Narrativa/mT5-base-finetuned-tydiQA-xqa",
+#     task="text2text-generation",
+#     pipeline_kwargs={"max_new_tokens":512},
+# )
 
 # llm_model = sql_llm_model
 
@@ -100,12 +101,67 @@ conn = get_db_connection("postgresql://postgres:postgres@localhost:5433/lmd_db",
 
 
 # Initialize LLM chain for Database and Knowledge-base
-db_chain = llm_chains.database.load_model_chain(llm_model, sql_llm_model, conn)#.with_fallbacks([llm_chains.knowledge_base.load_model_chain(llm_model, emb_model, conn)])
-knowledge_chain = llm_chains.knowledge_base.load_model_chain(
-    llm_model, emb_model, #id2en, en2id, 
-    conn
-)#.with_fallbacks([llm_chains.database.load_model_chain(llm_model, sql_llm_model, conn)])
+# db_chain = llm_chains.database.load_model_chain(llm_model, sql_llm_model, conn)#.with_fallbacks([llm_chains.knowledge_base.load_model_chain(llm_model, emb_model, conn)])
+# knowledge_chain = llm_chains.knowledge_base.load_model_chain(
+#     llm_model, emb_model, #id2en, en2id, 
+#     conn
+# )#.with_fallbacks([llm_chains.database.load_model_chain(llm_model, sql_llm_model, conn)])
 
+llm_chain = llm_chains.combined.load_model_chain_base(llm_model, emb_model, sql_llm_model, conn, memory_chain=None)
+
+
+
+
+@app.route('/cache_data_file', methods=['POST'])
+def update_knowledge_file():
+    tenant_name = request.form["tenant_name"]
+    module_flag = request.form["module_flag"]
+    socmed_type = request.form["socmed_type"]
+    # redis_url = request.form['redis_url']
+    file_save = request.files.getlist("file")
+    # db_name = request.form["table_name"] # Name of PostgreSQL table where knowledge base is stored in ["question", "answer"] format
+    # print(file_save)
+    # print([x for x in file_save])
+    # 1/0
+
+    if len(file_save) < 1:
+        raise Exception("Error! No File Given")
+
+    naming = f"{module_flag}_{tenant_name}_{socmed_type}" 
+
+    # with NamedTemporaryFile() as temp:
+    #     file_save.save(temp)
+    #     temp.seek(0)
+    #     loader = UnstructuredFileLoader(temp.name, mode='elements').load()
+
+    os.makedirs("temp", exist_ok=True)
+    
+    for i,x in enumerate(file_save):
+        x.save(os.path.join("temp",naming+f"_{i}"))
+
+    loader = DirectoryLoader('temp', use_multithreading=True).load()
+
+    shutil.rmtree('temp', ignore_errors=True)
+
+    splitter = RecursiveCharacterTextSplitter(chunk_size=512, chunk_overlap=20)
+
+    docs = splitter.split_documents(loader)
+
+    print(docs)
+
+    db = FAISS.from_documents(docs, emb_model)
+
+    cur = conn.cursor()
+
+    cur.execute(f'DROP TABLE IF EXISTS {naming}_embeddings;')
+    cur.execute(f'CREATE table {naming}_embeddings(data bytea);')
+    cur.execute(f'INSERT INTO {naming}_embeddings (data) values ({psycopg2.Binary(db.serialize_to_bytes())})')
+    conn.commit()
+    
+    # set_llm_cache(SQLAlchemyCache(engine))
+    print("Success Embedded data!")
+
+    return {"status": 200, "data" : {"response" : f"Data successfully cached to Postgre in {naming}_embeddings table!"}}
 
 
 
@@ -302,6 +358,47 @@ def chatbot_choose():
             print(e)
             out = db_chain.invoke({"question":query, "naming":naming})
             out = transform_output(out['out'], cur,query, llm)
+    
+    return { "status" : 200, "data" : {"response":out} }
+
+
+
+@app.route('/chatbot_combined', methods=['POST'])
+def chatbot_combined():
+    global conn
+
+    query = request.form["query"] # User input 
+    tenant_name = request.form["tenant_name"]
+    module_flag = request.form["module_flag"]
+    socmed_type = request.form["socmed_type"]
+
+    user_id = request.form['user_id']
+    schema = request.form['schema']
+
+
+    naming = f"{module_flag}_{tenant_name}_{socmed_type}"
+    
+    cur = conn.cursor()
+
+    # memory = ConversationBufferMemory(
+    #     return_messages=True, output_key="answer", input_key="question"
+    # )
+    # RedisChatMessageHistory(naming+"_"+user_id).clear()
+    
+
+    # memory.chat_memory.messages = redis_message
+    
+    out = llm_chain.invoke({"question":query,'naming':naming, 'schema':schema}, config={"configurable":{"session_id":naming+"_"+user_id}}).content
+    redis_message = RedisChatMessageHistory(naming+"_"+user_id).messages[-15:]
+    # print(redis_message)
+    RedisChatMessageHistory(naming+"_"+user_id).clear()
+    print(len(RedisChatMessageHistory(naming+"_"+user_id).messages))
+    
+    for x in redis_message:
+        RedisChatMessageHistory(naming+"_"+user_id).add_message(x)
+    print(len(RedisChatMessageHistory(naming+"_"+user_id).messages))
+    # memory.save_context({"question":query},{"answer":out})
+    # print(memory.chat_memory)
     
     return { "status" : 200, "data" : {"response":out} }
 

@@ -131,7 +131,7 @@ def chatbot_sql():
 
     query = request.form["query"] # User input
     # data_source = request.form['data_source'] # Data source (knowledge / database)
-
+    en_q = id2en(query)
     sql_query = sql_llm_model(table_str+en_q).split("WHERE")
     sql_query[1] = sql_query[1].replace('"',"'")
 
