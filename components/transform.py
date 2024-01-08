@@ -61,3 +61,7 @@ def fetch_all_rows_and_format(cursor, schema):
             result_string += " | ".join(map(str, row)) + "\n"
     print(result_string)
     return result_string
+
+
+def allowed_file(filename, ext):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ext

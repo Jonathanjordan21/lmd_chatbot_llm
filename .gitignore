@@ -9,6 +9,7 @@ __pycache__/
 # Testing py
 test.py
 test2.py
+tests.py
 
 # Postgres data
 postgres/data
