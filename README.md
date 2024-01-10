@@ -59,9 +59,22 @@ The required parameters are :
 
 
 ### /chatbot_combined endpoint
-Parallel implementation of Database and Knowledge-base. Chatbot gained information from both data source concurrently. If there is no match, the chatbot will ask further about the question given by the user. This chatbot also implemented memory cache by using redis to remember the chat history. <br><br>
+Parallel implementation of Database and Knowledge-base. Chatbot gained information from both data source concurrently. If there is no match, the chatbot will ask further about the statement given by the user. This chatbot also implemented memory cache by using redis to remember the chat history. <br><br>
 
 Make POST API call to /chatbot_combined endpoint <br>
+The required parameters are :
+1. query : user input (e.g What is LMD?)
+2. tenant_name : tenant name (e.g lmd)
+3. socmed_type : socmed type (e.g whatsapp)
+4. module_flag : module flag (e.g ebesha)
+5. schema : tenant schema name
+6. user_id : user id (string) to identify chat session for each tenant
+
+
+### /chatbot_knowledge endpoint
+**ONLY AVAILABLE FOR GEMINI API MODEL**. Chatbot gained information from knowledge base only. If there is no match, the chatbot will ask further about the statement given by the user. This chatbot also implemented memory cache by using redis to remember the chat history. <br><br>
+
+Make POST API call to /chatbot_knowledge endpoint <br>
 The required parameters are :
 1. query : user input (e.g What is LMD?)
 2. tenant_name : tenant name (e.g lmd)
