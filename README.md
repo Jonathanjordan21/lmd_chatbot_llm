@@ -76,7 +76,7 @@ The required parameters are :
 2. app_large : large huggingface local quantized model, moderately accurate (english only) chatbot
 3. app_fast : fast "sql-query-only" model (english only) chatbot
 4. app_gemini : Multilingual google gemini API model chatbot
-5. app_hf_inference : Multilingual huggingface inferece API with mixtral-8x7b-instruct model chatbot
+5. app_hf_inference : Multilingual huggingface inferece API with mixtral-8x7b-instruct model (knowledge-base only) chatbot 
  
 
 ## Expected output
