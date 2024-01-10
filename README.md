@@ -18,14 +18,21 @@ flask run
 
 <br>
 
-### Cache Data
+### Cache Data by Database table (columns=['question','answer'])
 Before generating the Chatbot response, make POST api call of `form-data` type to cache the knowledge base embeddings to /cache_data endpoint. <br>
 The required parameters are :
 1. tenant_name : tenant name (e.g lmd)
 2. socmed_type : socmed type (e.g whatsapp)
 3. module_flag : module flag (e.g ebesha)
 4. table_name : name of the knowledge base table, in the postgres/init-scripts/init.sql there are two knowledge base tables : lmd_knowledge and indomaret_knowledge 
-<br>
+
+### Cache Data by File Upload (.pdf, .csv, .txt)
+Before generating the Chatbot response, make POST api call of `form-data` type to cache the knowledge base embeddings to /cache_data_file endpoint. <br>
+The required parameters are :
+1. tenant_name : tenant name (e.g lmd)
+2. socmed_type : socmed type (e.g whatsapp)
+3. module_flag : module flag (e.g ebesha)
+4. file : files to upload for knowledge base. Only the text in the files will be used as the knowledge base. Images, GIFs, videos etc in pdf or csv files is ignored
 
 ## Generate Chatbot Response 
 ### /chatbot endpoint
