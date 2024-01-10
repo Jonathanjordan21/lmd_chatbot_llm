@@ -40,7 +40,7 @@ Uses zero shot classification method to classify whether the user input belongs 
 
 Make POST API call to /chatbot endpoint <br>
 The required parameters are :
-1. query : user input in ENGLISH (e.g What is LMD?)
+1. query : user input (e.g What is LMD?)
 2. tenant_name : tenant name (e.g lmd)
 3. socmed_type : socmed type (e.g whatsapp)
 4. module_flag : module flag (e.g ebesha)
@@ -51,7 +51,7 @@ User choose which data source to retrieve, the knowledge-base or the database. I
 
 Make POST API call to /chatbot_choose endpoint <br>
 The required parameters are :
-1. query : user input in ENGLISH (e.g What is LMD?)
+1. query : user input (e.g What is LMD?)
 2. tenant_name : tenant name (e.g lmd)
 3. socmed_type : socmed type (e.g whatsapp)
 4. module_flag : module flag (e.g ebesha)
@@ -63,7 +63,7 @@ Parallel implementation of Database and Knowledge-base. Chatbot gained informati
 
 Make POST API call to /chatbot_combined endpoint <br>
 The required parameters are :
-1. query : user input in ENGLISH (e.g What is LMD?)
+1. query : user input (e.g What is LMD?)
 2. tenant_name : tenant name (e.g lmd)
 3. socmed_type : socmed type (e.g whatsapp)
 4. module_flag : module flag (e.g ebesha)
