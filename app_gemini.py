@@ -88,7 +88,8 @@ conn = get_db_connection(os.environ['POSTGRE_URL'], password=os.environ.get('POS
 #     llm, emb_model,conn, memory_chain
 # )#.with_fallbacks([llm_chains.database.load_model_chain(llm_model, sql_llm_model, conn)])
 
-llm_chain = llm_chains.combined.load_model_chain_large(llm,emb_model,conn)
+llm_chain = llm_chains.combined.load_model_chain_large(llm,emb_model,conn) # Knowledge base + Database. Both run concurrently
+# llm_chain =  llm_chains.combined.load_model_chain_large_knowledge(llm,emb_model,conn) # Knowledge base Only
 
 
 @app.route('/cache_data_file', methods=['POST'])
@@ -220,6 +221,50 @@ def chatbot_choose():
     # print(memory.chat_memory)
     
     return { "status" : 200, "data" : {"response":out} }
+
+
+
+
+@app.route('/chatbot_knowledge', methods=['POST'])
+def chatbot_choose():
+    global conn
+
+    query = request.form["query"] # User input 
+    tenant_name = request.form["tenant_name"]
+    module_flag = request.form["module_flag"]
+    socmed_type = request.form["socmed_type"]
+    # data_source = request.form['data_source'] # Data source (knowledge / database)
+
+    user_id = request.form['user_id']
+    schema = request.form['schema']
+
+    
+    naming = f"{module_flag}_{tenant_name}_{socmed_type}"
+    
+    cur = conn.cursor()
+
+    # memory = ConversationBufferMemory(
+    #     return_messages=True, output_key="answer", input_key="question"
+    # )
+    # RedisChatMessageHistory(naming+"_"+user_id, os.getenv('REDIS_URL', "redis://localhost:6379/0")).clear()
+    
+
+    # memory.chat_memory.messages = redis_message
+    
+    out = llm_chain.invoke({"question":query,'naming':naming, 'schema':schema}, config={"configurable":{"session_id":naming+"_"+user_id}}).content
+    redis_message = RedisChatMessageHistory(naming+"_"+user_id, os.getenv('REDIS_URL', "redis://localhost:6379/0")).messages[-15:]
+    # print(redis_message)
+    RedisChatMessageHistory(naming+"_"+user_id, os.getenv('REDIS_URL', "redis://localhost:6379/0")).clear()
+    print(len(RedisChatMessageHistory(naming+"_"+user_id, os.getenv('REDIS_URL', "redis://localhost:6379/0")).messages))
+    
+    for x in redis_message:
+        RedisChatMessageHistory(naming+"_"+user_id, os.getenv('REDIS_URL', "redis://localhost:6379/0")).add_message(x)
+    print(len(RedisChatMessageHistory(naming+"_"+user_id, os.getenv('REDIS_URL', "redis://localhost:6379/0")).messages))
+    # memory.save_context({"question":query},{"answer":out})
+    # print(memory.chat_memory)
+    
+    return { "status" : 200, "data" : {"response":out} }
+
 
 
 

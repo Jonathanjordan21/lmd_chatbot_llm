@@ -191,6 +191,37 @@ def load_model_chain_large(llm, emb_model, conn, memory_chain=None):
 
 
 
+def load_model_chain_large_knowledge(llm, emb_model, conn,):
+    
+    template = """You are a helpful and informative AI customer service assistant. Always remember to thank the customer when they say thank you and greet them when they greet you.
+
+    You have access to the following context of knowledge base and internal resources to find the most relevant information for the customer's needs:
+
+    {context}"""
+
+
+    ANSWER_PROMPT = ChatPromptTemplate.from_messages(
+        [
+            ("system", template), MessagesPlaceholder(variable_name='history'), ("human", "{question}")
+        ]
+    )
+
+    full_chain = {
+        "context" : lambda x: check_threshold(x, conn.cursor(), emb_model),
+        "question" : lambda x: x['question'],
+        "history":itemgetter('history'), 
+    } | ANSWER_PROMPT | llm
+
+    return RunnableWithMessageHistory(
+        full_chain,
+        lambda session_id : RedisChatMessageHistory(session_id, os.getenv('REDIS_URL', "redis://localhost:6379/0")),
+        input_messages_key="question",
+        history_messages_key='history',
+    )
+
+
+
+
 
 def load_model_chain_base(llm, emb_model, sql_llm, conn, memory_chain=None):
 
