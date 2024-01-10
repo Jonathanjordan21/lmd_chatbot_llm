@@ -32,7 +32,7 @@ The required parameters are :
 1. tenant_name : tenant name (e.g lmd)
 2. socmed_type : socmed type (e.g whatsapp)
 3. module_flag : module flag (e.g ebesha)
-4. file : files to upload for knowledge base. Only the text in the files will be used as the knowledge base. Images, GIFs, videos etc in pdf or csv files is ignored
+4. file : files to upload for knowledge base. Only the text in the files will be used as the knowledge base. Images, GIFs, videos, etc in pdf or csv files is ignored
 
 ## Generate Chatbot Response 
 ### /chatbot endpoint
