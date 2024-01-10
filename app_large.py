@@ -160,45 +160,45 @@ def update_knowledge_file():
 
 
 
-@app.route('/cache_data_file', methods=['POST'])
-def update_knowledge_file():
-    tenant_name = request.form["tenant_name"]
-    module_flag = request.form["module_flag"]
-    socmed_type = request.form["socmed_type"]
-    # redis_url = request.form['redis_url']
-    file_save = request.files["file"]
-    # db_name = request.form["table_name"] # Name of PostgreSQL table where knowledge base is stored in ["question", "answer"] format
+# @app.route('/cache_data_file', methods=['POST'])
+# def update_knowledge_file():
+#     tenant_name = request.form["tenant_name"]
+#     module_flag = request.form["module_flag"]
+#     socmed_type = request.form["socmed_type"]
+#     # redis_url = request.form['redis_url']
+#     file_save = request.files["file"]
+#     # db_name = request.form["table_name"] # Name of PostgreSQL table where knowledge base is stored in ["question", "answer"] format
 
-    naming = f"{module_flag}_{tenant_name}_{socmed_type}" 
+#     naming = f"{module_flag}_{tenant_name}_{socmed_type}" 
 
-    # with NamedTemporaryFile() as temp:
-    #     file_save.save(temp)
-    #     temp.seek(0)
-    #     loader = UnstructuredFileLoader(temp.name, mode='elements').load()
+#     # with NamedTemporaryFile() as temp:
+#     #     file_save.save(temp)
+#     #     temp.seek(0)
+#     #     loader = UnstructuredFileLoader(temp.name, mode='elements').load()
 
-    file_save.save(naming)
+#     file_save.save(naming)
 
-    loader = UnstructuredFileLoader(naming, mode='elements').load()
+#     loader = UnstructuredFileLoader(naming, mode='elements').load()
 
-    os.remove(naming)
+#     os.remove(naming)
 
-    splitter = RecursiveCharacterTextSplitter(chunk_size=512, chunk_overlap=20)
+#     splitter = RecursiveCharacterTextSplitter(chunk_size=512, chunk_overlap=20)
 
-    docs = splitter.split_documents(loader)
+#     docs = splitter.split_documents(loader)
 
-    print(docs)
+#     print(docs)
 
-    db = FAISS.from_documents(docs, emb_model)
+#     db = FAISS.from_documents(docs, emb_model)
 
-    cur.execute(f'DROP TABLE IF EXISTS {naming}_embeddings;')
-    cur.execute(f'CREATE table {naming}_embeddings(data bytea);')
-    cur.execute(f'INSERT INTO {naming}_embeddings (data) values ({psycopg2.Binary(db.serialize_to_bytes())})')
-    conn.commit()
+#     cur.execute(f'DROP TABLE IF EXISTS {naming}_embeddings;')
+#     cur.execute(f'CREATE table {naming}_embeddings(data bytea);')
+#     cur.execute(f'INSERT INTO {naming}_embeddings (data) values ({psycopg2.Binary(db.serialize_to_bytes())})')
+#     conn.commit()
     
-    # set_llm_cache(SQLAlchemyCache(engine))
-    print("Success Embedded data!")
+#     # set_llm_cache(SQLAlchemyCache(engine))
+#     print("Success Embedded data!")
 
-    return {"status": 200, "data" : {"response" : f"Data successfully cached to Postgre in {naming}_embeddings table!"}}
+#     return {"status": 200, "data" : {"response" : f"Data successfully cached to Postgre in {naming}_embeddings table!"}}
 
 
 @app.route('/cache_data', methods=['POST']) # Endpoint to train the data
