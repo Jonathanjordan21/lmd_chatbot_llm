@@ -32,7 +32,7 @@ The required parameters are :
 1. tenant_name : tenant name (e.g lmd)
 2. socmed_type : socmed type (e.g whatsapp)
 3. module_flag : module flag (e.g ebesha)
-4. file : files to upload for knowledge base. Only the text in the files will be used as the knowledge base. Images, GIFs, videos, etc in pdf or csv files is ignored
+4. file : files to upload for knowledge base. Only the text in the files will be used as the knowledge base. Images, GIFs, videos, etc in pdf or csv files is ignored <br>
 
 ## Generate Chatbot Response 
 ### /chatbot endpoint
@@ -44,7 +44,7 @@ The required parameters are :
 2. tenant_name : tenant name (e.g lmd)
 3. socmed_type : socmed type (e.g whatsapp)
 4. module_flag : module flag (e.g ebesha)
-<br>
+
 
 ### /chatbot_choose endpoint
 User choose which data source to retrieve, the knowledge-base or the database. If the choosen data source doesn't find a match, then the other data source will catch the error and be used to search for the query. If it also didn't find a match, then an exception will be returned. <br><br>
@@ -56,7 +56,7 @@ The required parameters are :
 3. socmed_type : socmed type (e.g whatsapp)
 4. module_flag : module flag (e.g ebesha)
 5. data_source : data source to retrieve (database or knowledge)
-<br>
+
 
 ### /chatbot_combined endpoint
 Parallel implementation of Database and Knowledge-base. Chatbot gained information from both data source concurrently. If there is no match, the chatbot will ask further about the question given by the user. This chatbot also implemented memory cache by using redis to remember the chat history. <br><br>
