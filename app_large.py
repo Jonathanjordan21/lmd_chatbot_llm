@@ -256,20 +256,20 @@ def chatbot_choose():
     # memory = ConversationBufferMemory(
     #     return_messages=True, output_key="answer", input_key="question"
     # )
-    # RedisChatMessageHistory(naming+"_"+user_id).clear()
+    # RedisChatMessageHistory(naming+"_"+user_id, os.getenv('REDIS_URL', "redis://localhost:6379/0")).clear()
     
 
     # memory.chat_memory.messages = redis_message
     
     out = llm_chain.invoke({"question":query,'naming':naming, 'schema':schema}, config={"configurable":{"session_id":naming+"_"+user_id}}).content
-    redis_message = RedisChatMessageHistory(naming+"_"+user_id).messages[-15:]
+    redis_message = RedisChatMessageHistory(naming+"_"+user_id, os.getenv('REDIS_URL', "redis://localhost:6379/0")).messages[-15:]
     # print(redis_message)
-    RedisChatMessageHistory(naming+"_"+user_id).clear()
-    print(len(RedisChatMessageHistory(naming+"_"+user_id).messages))
+    RedisChatMessageHistory(naming+"_"+user_id, os.getenv('REDIS_URL', "redis://localhost:6379/0")).clear()
+    print(len(RedisChatMessageHistory(naming+"_"+user_id, os.getenv('REDIS_URL', "redis://localhost:6379/0")).messages))
     
     for x in redis_message:
-        RedisChatMessageHistory(naming+"_"+user_id).add_message(x)
-    print(len(RedisChatMessageHistory(naming+"_"+user_id).messages))
+        RedisChatMessageHistory(naming+"_"+user_id, os.getenv('REDIS_URL', "redis://localhost:6379/0")).add_message(x)
+    print(len(RedisChatMessageHistory(naming+"_"+user_id, os.getenv('REDIS_URL', "redis://localhost:6379/0")).messages))
     # memory.save_context({"question":query},{"answer":out})
     # print(memory.chat_memory)
     

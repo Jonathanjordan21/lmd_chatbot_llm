@@ -10,7 +10,7 @@ from langchain.memory import ConversationBufferMemory, RedisChatMessageHistory
 
 
 from operator import itemgetter
-import re
+import re, os
 from components import transform
 from langchain.vectorstores import FAISS
 import psycopg2
@@ -129,7 +129,7 @@ def load_model_chain_phi2(llm, emb_model, conn, memory_chain=None):
 
     return RunnableWithMessageHistory(
         full_chain,
-        lambda session_id : RedisChatMessageHistory(session_id),
+        lambda session_id : RedisChatMessageHistory(session_id, os.getenv('REDIS_URL', "redis://localhost:6379/0")),
         input_messages_key="question",
         history_messages_key='history',
     )
@@ -183,7 +183,7 @@ def load_model_chain_large(llm, emb_model, conn, memory_chain=None):
 
     return RunnableWithMessageHistory(
         full_chain,
-        lambda session_id : RedisChatMessageHistory(session_id),
+        lambda session_id : RedisChatMessageHistory(session_id, os.getenv('REDIS_URL', "redis://localhost:6379/0")),
         input_messages_key="question",
         history_messages_key='history',
     )
@@ -233,7 +233,7 @@ def load_model_chain_base(llm, emb_model, sql_llm, conn, memory_chain=None):
 
     return RunnableWithMessageHistory(
         full_chain,
-        lambda session_id : RedisChatMessageHistory(session_id),
+        lambda session_id : RedisChatMessageHistory(session_id, os.getenv('REDIS_URL', "redis://localhost:6379/0")),
         input_messages_key="question",
         history_messages_key='history',
     )
