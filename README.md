@@ -19,7 +19,7 @@ flask run
 <br>
 
 ### Cache Data by Database table (columns=['question','answer'])
-Before generating the Chatbot response, make POST api call of `form-data` type to cache the knowledge base embeddings to /cache_data endpoint. <br>
+Before generating the Chatbot response, make POST api call of `form-data` type to cache the knowledge base embeddings to `/cache_data` endpoint. <br>
 The required parameters are :
 1. tenant_name : tenant name (e.g lmd)
 2. socmed_type : socmed type (e.g whatsapp)
@@ -27,7 +27,7 @@ The required parameters are :
 4. table_name : name of the knowledge base table, in the postgres/init-scripts/init.sql there are two knowledge base tables : lmd_knowledge and indomaret_knowledge 
 
 ### Cache Data by File Upload (.pdf, .csv, .txt)
-Before generating the Chatbot response, make POST api call of `form-data` type to cache the knowledge base embeddings to /cache_data_file endpoint. <br>
+Before generating the Chatbot response, make POST api call of `form-data` type to cache the knowledge base embeddings to `/cache_data_file` endpoint. <br>
 The required parameters are :
 1. tenant_name : tenant name (e.g lmd)
 2. socmed_type : socmed type (e.g whatsapp)
@@ -38,7 +38,7 @@ The required parameters are :
 ### /chatbot endpoint
 Uses zero shot classification method to classify whether the user input belongs to the database or knowledge-base domain. <br><br>
 
-Make POST API call to /chatbot endpoint <br>
+Make POST API call to `/chatbot` endpoint <br>
 The required parameters are :
 1. query : user input (e.g What is LMD?)
 2. tenant_name : tenant name (e.g lmd)
@@ -49,7 +49,7 @@ The required parameters are :
 ### /chatbot_choose endpoint
 User choose which data source to retrieve, the knowledge-base or the database. If the choosen data source doesn't find a match, then the other data source will catch the error and be used to search for the query. If it also didn't find a match, then an exception will be returned. <br><br>
 
-Make POST API call to /chatbot_choose endpoint <br>
+Make POST API call to `/chatbot_choose` endpoint <br>
 The required parameters are :
 1. query : user input (e.g What is LMD?)
 2. tenant_name : tenant name (e.g lmd)
@@ -61,7 +61,7 @@ The required parameters are :
 ### /chatbot_combined endpoint
 Parallel implementation of Database and Knowledge-base. Chatbot gained information from both data source concurrently. If there is no match, the chatbot will ask further about the statement given by the user. This chatbot also implemented memory cache by using redis to remember the chat history. <br><br>
 
-Make POST API call to /chatbot_combined endpoint <br>
+Make POST API call to `/chatbot_combined` endpoint <br>
 The required parameters are :
 1. query : user input (e.g What is LMD?)
 2. tenant_name : tenant name (e.g lmd)
@@ -74,7 +74,7 @@ The required parameters are :
 ### /chatbot_knowledge endpoint
 **ONLY AVAILABLE FOR GEMINI API MODEL**. Chatbot gained information from knowledge base only. If there is no match, the chatbot will ask further about the statement given by the user. This chatbot also implemented memory cache by using redis to remember the chat history. <br><br>
 
-Make POST API call to /chatbot_knowledge endpoint <br>
+Make POST API call to `/chatbot_knowledge` endpoint <br>
 The required parameters are :
 1. query : user input (e.g What is LMD?)
 2. tenant_name : tenant name (e.g lmd)
