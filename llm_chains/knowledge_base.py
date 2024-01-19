@@ -68,55 +68,55 @@ def format_docs(d):
 
 
 
-def load_model_chain(
-    model, emb_model, id2en=None, en2id=None,
-    conn=None
-):
+# def load_model_chain(
+#     model, emb_model, id2en=None, en2id=None,
+#     conn=None
+# ):
 
-    #You prefer to reply with "I don't know" rather than giving unobvious answer.
+#     #You prefer to reply with "I don't know" rather than giving unobvious answer.
     
-    template = """You are a customer service who is very careful on giving information to customers.
+#     template = """You are a customer service who is very careful on giving information to customers.
     
-    Answer every customer question briefly in one or two sentences based only on the following context :
+#     Answer every customer question briefly in one or two sentences based only on the following context :
 
-    {context}
+#     {context}
 
-    Question: {question}
-    """
+#     Question: {question}
+#     """
 
-    chain = RunnableParallel(
-        standalone_question=RunnablePassthrough.assign(
-            chat_history=lambda x: get_buffer_string(x["chat_history"])
-        )
-        | CONDENSE_QUESTION_PROMPT
-        | llm
-        | StrOutputParser(),
-    )
+#     chain = RunnableParallel(
+#         standalone_question=RunnablePassthrough.assign(
+#             chat_history=lambda x: get_buffer_string(x["chat_history"])
+#         )
+#         | CONDENSE_QUESTION_PROMPT
+#         | model
+#         | StrOutputParser(),
+#     )
 
-    memory = ConversationBufferMemory(
-        return_messages=True, output_key="answer", input_key="question"
-    )
+#     memory = ConversationBufferMemory(
+#         return_messages=True, output_key="answer", input_key="question"
+#     )
 
-    loaded_memory = RunnablePassthrough.assign(
-        chat_history=RunnableLambda(memory.load_memory_variables) | itemgetter("history"),
-    )
-
-
-
-    cur = conn.cursor()
+#     loaded_memory = RunnablePassthrough.assign(
+#         chat_history=RunnableLambda(memory.load_memory_variables) | itemgetter("history"),
+#     )
 
 
-    chains = loaded_memory | {"context":lambda x: check_threshold(x["question"], vectorstore), "question": lambda x: x["question"], "chat_message":lambda x:transform_chat_history(x["chat_history"])} | ANSWER_PROMPT | llm
+
+#     cur = conn.cursor()
+
+
+#     chains = loaded_memory | {"context":lambda x: check_threshold(x["question"], vectorstore), "question": lambda x: x["question"], "chat_message":lambda x:transform_chat_history(x["chat_history"])} | ANSWER_PROMPT | llm
 
     
         
-    full_chain = {
-        "context" : lambda x: check_threshold(x, cur, emb_model), "question" : itemgetter('question')
-    } | prompt | model | StrOutputParser()
+#     full_chain = {
+#         "context" : lambda x: check_threshold(x, cur, emb_model), "question" : itemgetter('question')
+#     } | prompt | model | StrOutputParser()
 
 
         
-    return full_chain
+#     return full_chain
 
 
 

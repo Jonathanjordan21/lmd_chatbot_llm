@@ -64,66 +64,6 @@ table_str = retrieve_fast_sql(conn, schema='public')
 
 
 
-@app.route('/cache_data', methods=['POST']) # Endpoint to train the data
-def update_knowledge(): 
-    print("Initializing...")
-    if request.method == 'POST':
-        tenant_name = request.form["tenant_name"]
-        module_flag = request.form["module_flag"]
-        socmed_type = request.form["socmed_type"]
-        redis_url = request.form['redis_url']
-        db_name = request.form["table_name"] # Name of PostgreSQL table where knowledge base is stored in ["question", "answer"] format
-
-        naming = f"{module_flag}_{tenant_name}_{socmed_type}" # redis cache naming convention format
-
-        df = retrieve_all_data(conn, db_name) # Retrieve all data from database
-
-        print(df)
-
-        cur = conn.cursor()
-        
-        db = FAISS.from_texts(df['answer'].tolist(), emb_model)
-        
-        cur.execute(f'DROP TABLE IF EXISTS {naming}_embeddings;')
-        cur.execute(f'CREATE table {naming}_embeddings(data bytea);')
-        cur.execute(f'INSERT INTO {naming}_embeddings (data) values ({psycopg2.Binary(db.serialize_to_bytes())})')
-        conn.commit()
-        
-        set_llm_cache(SQLAlchemyCache(engine))
-        print("Success Embedded data!")
-
-        return {"status": 200, "data" : {"response" : "Data successfully cached to Postgre!"}}
-
-
-
-
-def transform_output(res, cur,question, model):
-    res, agg,table_name = res
-    cur = conn.cursor()
-    if agg == None:
-        results = transform.decimal_to_float(res)
-        table_name = table_name.replace('"', "")
-        cur.execute(f"SELECT column_name FROM information_schema.columns WHERE table_name = '{table_name}' AND table_schema = 'public';")
-        
-        col_name = cur.fetchall()
-        
-        print(col_name)
-        results = [{col_n[0] : v for col_n,v in zip(col_name,res)} for res in results]
-
-        return results
-
-        # res = [" | ".join([f"{col_n[0]} : {v}" for col_n,v in zip(col_name,res)]) for res in results]
-        # print(res)
-    
-    # results = llm(f"""Generate final response based on the following question and the answer\n\nQUESTION:\n{query}\n\nANSWER:\n{agg}:{' '.join([str(x[0]) for x in res])}""")
-    # print(results)
-    # s = "\n"
-    else :
-        answer = '\n'.join([str(x[0]) for x in res]) 
-        prompt = PromptTemplate.from_template("Generate final response based on the below question and the answer\n\nQUESTION:\n{query}\n\n"+f"ANSWER:\n{answer}")
-
-        return (prompt | model | en2id).invoke({"query":question, "answer":answer})
-
 
 @app.route('/chatbot_sql', methods=['POST'])
 def chatbot_sql():
@@ -189,7 +129,7 @@ def delete_cache():
     # Close the cursor and connection
     cursor.close()
     # connection.close()
-    set_llm_cache(SQLAlchemyCache(engine))
+    # set_llm_cache(SQLAlchemyCache(engine))
 
 
     return {

@@ -16,7 +16,7 @@ from langchain_community.embeddings import HuggingFaceInferenceAPIEmbeddings
 from langchain.vectorstores import FAISS
 from langchain_community.document_loaders import DirectoryLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-
+import shutil
 
 # memory = ConversationBufferMemory(return_messages=True)
 

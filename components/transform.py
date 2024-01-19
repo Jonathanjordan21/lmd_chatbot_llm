@@ -1,6 +1,8 @@
 from decimal import Decimal
 import re
 
+from psycopg2 import sql
+
 def decimal_to_float(obj):
     if isinstance(obj, Decimal):
         return round(float(obj),2)

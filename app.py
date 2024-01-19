@@ -36,6 +36,7 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 
 import psycopg2
 from psycopg2 import sql
+import shutil
 
 app = Flask(__name__) # Initialize Flask App
 
@@ -322,44 +323,44 @@ def transform_output(res, cur,question, model):
         return (prompt | model | en2id).invoke({"query":question, "answer":answer})
 
 
-@app.route('/chatbot_choose', methods=['POST'])
-def chatbot_choose():
-    global conn
+# @app.route('/chatbot_choose', methods=['POST'])
+# def chatbot_choose():
+#     global conn
 
-    query = request.form["query"] # User input 
-    tenant_name = request.form["tenant_name"]
-    module_flag = request.form["module_flag"]
-    socmed_type = request.form["socmed_type"]
-    data_source = request.form['data_source'] # Data source (knowledge / database)
-    try :
-        openai_api_key = request.form["openai_api_key"]
-        llm = sql_llm = ChatOpenAI(temperature=0, openai_api_key=openai_api_key)
-    except :
-        openai_api_key = None
-        llm = llm_model
-        sql_llm = sql_llm_model
+#     query = request.form["query"] # User input 
+#     tenant_name = request.form["tenant_name"]
+#     module_flag = request.form["module_flag"]
+#     socmed_type = request.form["socmed_type"]
+#     data_source = request.form['data_source'] # Data source (knowledge / database)
+#     try :
+#         openai_api_key = request.form["openai_api_key"]
+#         llm = sql_llm = ChatOpenAI(temperature=0, openai_api_key=openai_api_key)
+#     except :
+#         openai_api_key = None
+#         llm = llm_model
+#         sql_llm = sql_llm_model
 
     
-    naming = f"{module_flag}_{tenant_name}_{socmed_type}"
+#     naming = f"{module_flag}_{tenant_name}_{socmed_type}"
     
-    cur = conn.cursor()
+#     cur = conn.cursor()
 
-    if data_source == 'database':
-        try :
-            out = db_chain.invoke({"question":query, "naming":naming})
-            out = transform_output(out['out'], cur,query, llm)
-        except Exception as e:
-            print(e)
-            out = knowledge_chain.invoke({"question":query,'naming':naming})
-    else :
-        try :
-            out = knowledge_chain.invoke({"question":query,'naming':naming})
-        except Exception as e :
-            print(e)
-            out = db_chain.invoke({"question":query, "naming":naming})
-            out = transform_output(out['out'], cur,query, llm)
+#     if data_source == 'database':
+#         try :
+#             out = db_chain.invoke({"question":query, "naming":naming})
+#             out = transform_output(out['out'], cur,query, llm)
+#         except Exception as e:
+#             print(e)
+#             out = knowledge_chain.invoke({"question":query,'naming':naming})
+#     else :
+#         try :
+#             out = knowledge_chain.invoke({"question":query,'naming':naming})
+#         except Exception as e :
+#             print(e)
+#             out = db_chain.invoke({"question":query, "naming":naming})
+#             out = transform_output(out['out'], cur,query, llm)
     
-    return { "status" : 200, "data" : {"response":out} }
+#     return { "status" : 200, "data" : {"response":out} }
 
 
 

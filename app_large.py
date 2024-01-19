@@ -81,8 +81,8 @@ emb_model = HuggingFaceEmbeddings(model_name='sentence-transformers/paraphrase-m
 
 ## set_llm_cache(RedisSemanticCache(redis_url="redis://localhost:6379", embedding=emb_model)) # Redis LLM Semantic Cache
 
-# engine = create_engine("postgresql://postgres:postgres@localhost:5433/lmd_db")  
-# set_llm_cache(SQLAlchemyCache(engine)) # Postgre LLM Cache
+engine = create_engine("postgresql://postgres:postgres@localhost:5433/lmd_db")  
+set_llm_cache(SQLAlchemyCache(engine)) # Postgre LLM Cache
 
 # r = get_redis_connection(redis_url) # Initialize redis connection
 
@@ -101,7 +101,7 @@ conn = get_db_connection(os.environ['POSTGRE_URL'], password=os.environ.get('POS
 #     llm, emb_model,conn, memory_chain
 # )#.with_fallbacks([llm_chains.database.load_model_chain(llm_model, sql_llm_model, conn)])
 
-llm_chain = llm_chains.combined.load_model_chain_phi2(llm,emb_model,conn)
+llm_chain = llm_chains.combined.load_model_chain_phi2(llm_model,emb_model,conn)
 
 
 

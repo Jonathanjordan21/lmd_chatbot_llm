@@ -310,7 +310,7 @@ def delete_cache():
     # Close the cursor and connection
     cursor.close()
     # connection.close()
-    set_llm_cache(SQLAlchemyCache(engine))
+    # set_llm_cache(SQLAlchemyCache(engine))
 
 
     return {
