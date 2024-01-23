@@ -37,6 +37,8 @@ def custom_chain_with_history(llm, emb_model, cur):
     prompt = PromptTemplate.from_template("""<s><INST><|system|>
     You are a helpful and informative AI customer service assistant. Always remember to thank the customer when they say thank you and greet them when they greet you.
 
+    If there is no relevant information within the context, that means the information is top secret and you should not share the information to user.
+
     You have access to the following context of knowledge base and internal resources to find the most relevant information for the customer's needs:
     {context} 
     
@@ -51,7 +53,7 @@ def custom_chain_with_history(llm, emb_model, cur):
       t = ""
     #   memory = RedisChatMessageHistory(session_id)
     #   memory = ConversationBufferMemory(return_messages=True)
-      for x in memory.chat_memory.messages:
+      for x in memory.messages:
         t += f"<|assistant|>\n<s>{x.content}</s>\n" if type(x) is AIMessage else f"<|user|>\n{x.content}\n"
       return "" if len(t) == 0 else t
     

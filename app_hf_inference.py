@@ -106,6 +106,36 @@ def update_knowledge_file():
     return {"status": 200, "data" : {"response" : f"Data successfully cached to Postgre in {naming}_embeddings table!"}}
 
 
+@app.route('/cache_wi_knowledge', methods=['POST'])
+def update_wi_knowledge():
+    print("Initializing...")
+    if request.method == 'POST':
+        tenant_name = request.form["tenant_name"]
+        module_flag = request.form["module_flag"]
+        socmed_type = request.form["socmed_type"] # Name of PostgreSQL table where knowledge base is stored in ["question", "answer"] format
+
+        naming = f"{module_flag}_{tenant_name}_{socmed_type}"
+
+        v = open("wi_knowledge_embeddings", "rb")
+
+        db = FAISS.deserialize_from_bytes(
+            embeddings=emb_model, serialized=v
+        )
+
+        cur = conn.cursor()
+
+        cur.execute(f'DROP TABLE IF EXISTS {naming}_embeddings;')
+        cur.execute(f'CREATE table {naming}_embeddings(data bytea);')
+        cur.execute(f'INSERT INTO {naming}_embeddings (data) values ({psycopg2.Binary(db.serialize_to_bytes())})')
+        conn.commit()
+
+        v.close()
+
+        print(f"Success Embedded data to {naming}_embeddings!")
+        
+        return {"status": 200, "data" : {"response" : f"Data successfully cached to Postgre in {naming}_embeddings table!"}}
+
+
 
 @app.route('/cache_data', methods=['POST']) # Endpoint to train the data
 def update_knowledge(): 
@@ -154,6 +184,7 @@ def chatbot_choose():
 
     
     naming = f"{module_flag}_{tenant_name}_{socmed_type}"
+    # naming = f"{module_flag}_{tenant_name}"
     
     # cur = conn.cursor()
 
@@ -176,17 +207,22 @@ def chatbot_choose():
     
 
     # memory.chat_memory.messages = redis_message
+
+    memory.add_user_message(query)
+    memory.add_ai_message(out)
     
     # out = llm_chain.invoke({"question":query,'naming':naming, 'schema':schema}, config={"configurable":{"session_id":naming+"_"+user_id}}).content
-    redis_message = RedisChatMessageHistory(naming+"_"+user_id, os.getenv('REDIS_URL', "redis://localhost:6379/0")).messages[-15:]
-    # print(redis_message)
-    RedisChatMessageHistory(naming+"_"+user_id, os.getenv('REDIS_URL', "redis://localhost:6379/0")).clear()
-    print(len(RedisChatMessageHistory(naming+"_"+user_id, os.getenv('REDIS_URL', "redis://localhost:6379/0")).messages))
     
-    for x in redis_message:
-        RedisChatMessageHistory(naming+"_"+user_id, os.getenv('REDIS_URL', "redis://localhost:6379/0")).add_message(x)
+    if len(memory.messages) > 15:
+        redis_message = RedisChatMessageHistory(naming+"_"+user_id, os.getenv('REDIS_URL', "redis://localhost:6379/0")).messages[-15:]
+        # print(redis_message)
+        RedisChatMessageHistory(naming+"_"+user_id, os.getenv('REDIS_URL', "redis://localhost:6379/0")).clear()
+        print(len(RedisChatMessageHistory(naming+"_"+user_id, os.getenv('REDIS_URL', "redis://localhost:6379/0")).messages))
+        
+        for x in redis_message:
+            RedisChatMessageHistory(naming+"_"+user_id, os.getenv('REDIS_URL', "redis://localhost:6379/0")).add_message(x)
     print(len(RedisChatMessageHistory(naming+"_"+user_id, os.getenv('REDIS_URL', "redis://localhost:6379/0")).messages))
-    memory.save_context({"question":query},{"answer":out})
+    # memory.save_context({"question":query},{"answer":out})
     # print(memory.chat_memory)
     
     return { "status" : 200, "data" : {"response":out} }
