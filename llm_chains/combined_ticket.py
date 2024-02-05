@@ -364,7 +364,7 @@ def check_threshold(l, cur, emb_model):
     # d = [doc for doc,score in vecs.similarity_search_with_relevance_scores(query) if score >= 0]
 
     # d = vecs.max_marginal_relevance_search(query, k=8)
-    docs = vecs.similarity_search(query, k=12)
+    docs = asyncio.run(vecs.asimilarity_search(query, k=12))
     print(docs)
     print(len(docs))
     # d = [doc for doc,score in vecs.similarity_search_with_score(query, k=5, distance_threshold=0.1)]
