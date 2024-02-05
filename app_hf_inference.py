@@ -170,7 +170,7 @@ def update_knowledge():
 
 
 @app.route('/chatbot_combined', methods=['POST'])
-def chatbot_choose():
+async def chatbot_choose():
     global conn
 
     query = request.form["query"] # User input 
@@ -196,7 +196,7 @@ def chatbot_choose():
 
     # memory = ConversationBufferMemory(return_messages=True)
 
-    out = chain.invoke({"question":query, "memory":memory, "naming":naming}).split("\n<|")[0]
+    out = (await chain.ainvoke({"question":query, "memory":memory, "naming":naming})).split("\n<|")[0]
 
     
     # memory.save_context({"question":prompt}, {"output":prompt})

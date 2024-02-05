@@ -1,10 +1,9 @@
-from typing import Any, List, Mapping, Optional
+from typing import Any, List, Mapping, Optional, Dict
 
 from langchain_core.callbacks.manager import CallbackManagerForLLMRun
 from langchain_core.language_models.llms import LLM
 from typing import Literal
-import requests
-from langchain.prompts import PromptTemplate, ChatPromptTemplate
+from langchain.prompts import PromptTemplate
 from operator import itemgetter
 
 from langchain.memory import RedisChatMessageHistory
@@ -23,7 +22,7 @@ from langchain_community.embeddings import HuggingFaceInferenceAPIEmbeddings
 
 from langchain.vectorstores import FAISS
 from langchain_core.runnables import RunnableBranch
-import pickle, asyncio, traceback
+import pickle, asyncio, traceback, aiohttp
 
 # os.environ['FAISS_NO_AVX2'] = '1'
 import pandas as pd
@@ -315,6 +314,39 @@ class CustomLLM(LLM):
         data = {"inputs": prompt, "parameters":parameters_dict, "options":{"wait_for_model":True}}
         data = requests.post(API_URL, headers=headers, json=data).json()
         return data[0]['generated_text']
+        # return asyncio.run(self.run(headers, API_URL, data))
+
+
+    async def _acall(
+        self,
+        inputs: Dict[str,Any],
+        stop: Optional[List[str]] = None,
+        run_manager: Optional[CallbackManagerForLLMRun] = None,
+        **kwargs: Any,
+    ) -> Dict[str,str]:
+
+        headers = {"Authorization": f"Bearer {self.api_token}"}
+        API_URL = f"https://api-inference.huggingface.co/models/{self.repo_id}"
+
+        parameters_dict = {
+          'max_new_tokens': self.max_new_tokens,
+          'temperature': self.temperature,
+          'timeout': self.timeout,
+          'top_p': self.top_p,
+          'top_k': self.top_k,
+          'repetition_penalty': self.repetition_penalty,
+          'stop':self.stop
+        }
+
+        if self.model_type == 'text-generation':
+            parameters_dict["return_full_text"]=False
+
+        data = {"inputs": inputs, "parameters":parameters_dict, "options":{"wait_for_model":True}}
+
+        async with aiohttp.ClientSession(headers=headers) as session:
+            async with session.post(API_URL, json=data) as response:
+                data = await response.json()
+                return data[0]['generated_text']
 
     @property
     def _identifying_params(self) -> Mapping[str, Any]:

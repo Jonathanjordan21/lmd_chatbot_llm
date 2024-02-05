@@ -149,7 +149,7 @@ def update_knowledge_file():
 
 
 @app.route('/chatbot_combined', methods=['POST'])
-def chatbot_choose():
+async def chatbot_choose():
     global conn
 
     query = request.form["query"] # User input 
@@ -179,7 +179,7 @@ def chatbot_choose():
     # cur = conn.cursor()
 
 
-    out = chain.invoke({"question":query, "user_id":user_id, "naming":naming, "table_name":table_name, "schema": schema}).split("\n<|")[0]
+    out = (await chain.ainvoke({"question":query, "user_id":user_id, "naming":naming, "table_name":table_name, "schema": schema})).split("\n<|")[0]
 
     
     # memory.save_context({"question":prompt}, {"output":prompt})
