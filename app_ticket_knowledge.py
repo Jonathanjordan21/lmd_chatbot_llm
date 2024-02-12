@@ -60,8 +60,18 @@ emb_model = HuggingFaceInferenceAPIEmbeddings(
 
 
 memory_chain = custom_chain_with_history(CustomLLM(repo_id="mistralai/Mixtral-8x7B-Instruct-v0.1", model_type='text-generation', api_token=API_TOKEN, stop=["\n<|","<|"]), emb_model, conn.cursor())
-database_chain = custom_database_chain(CustomLLM(repo_id="mistralai/Mixtral-8x7B-Instruct-v0.1", model_type='text-generation', api_token=API_TOKEN, stop=["\n<|","<|"]),conn)
-chain = custom_combined_chain(CustomLLM(repo_id="mistralai/Mixtral-8x7B-Instruct-v0.1", model_type='text-generation', api_token=API_TOKEN, stop=["\n<|","<|"], max_new_tokens=4), database_chain, memory_chain, conn=conn)
+
+database_chain = custom_database_chain(
+    CustomLLM(repo_id="mistralai/Mixtral-8x7B-Instruct-v0.1", model_type='text-generation', 
+    api_token=API_TOKEN, stop=["\n<|","<|"]), conn,
+    ticket_submission_only=False # Ubah menjadi ticket_submission_only=True untuk Ebesha Ticket Submission
+)
+
+chain = custom_combined_chain(
+    CustomLLM(repo_id="mistralai/Mixtral-8x7B-Instruct-v0.1", model_type='text-generation', api_token=API_TOKEN, stop=["\n<|","<|"], max_new_tokens=4),
+    database_chain, memory_chain, conn=conn, 
+    ticket_submission_only=False  # Ubah menjadi ticket_submission_only=True untuk Ebesha Ticket Submission
+)
 
 
 
@@ -157,7 +167,11 @@ async def chatbot_choose():
     module_flag = request.form["module_flag"]
     socmed_type = request.form["socmed_type"]
     # data_source = request.form['data_source'] # Data source (knowledge / database)
-    table_name = request.form['table_name']
+
+    try :
+        table_name = request.form['table_name'] #table_name hanya dibutuhkan jika ticket_submission_only=True
+    except:
+        table_name = ""
 
     user_id = request.form['user_id']
     schema = request.form['schema']

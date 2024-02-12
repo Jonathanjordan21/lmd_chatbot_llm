@@ -71,29 +71,46 @@ async def create_vectorstore(emb_model, docs):
     
 
 
-def custom_database_chain(llm, conn):
+def custom_database_chain(llm, conn, ticket_submission_only=False):
 
     cur = conn.cursor()
 
-    prompt = PromptTemplate.from_template("""<s><INST> You have access to a postgresql database named "{table_name}" with the following columns and datatype:
-    {columns}
+    if not ticket_submission_only:
+        prompt = PromptTemplate.from_template("""<s><INST> You have access to a postgresql database named "{table_name}" with the following columns and datatype:
+        {columns}
 
-    The following are unique values for the prominent categorical columns:
-    {unique} 
+        The following are unique values for the prominent categorical columns:
+        {unique} 
 
-    Create SQL query in format for the following question
+        Create SQL query in format for the following question
 
-    <question>
-    {question}
-    </question>
+        <question>
+        {question}
+        </question>
 
-    the output must follow the following format:
+        the output must follow the following format:
 
-    ```sql
-    ```
+        ```sql
+        ```
 
-    </s></INST>
-    """)
+        </s></INST>
+        """)
+    else:
+        prompt = PromptTemplate.from_template("""<s><INST> You have access to a postgresql database named "{table_name}".
+
+        Create SQL query in format for the following question
+
+        <question>
+        {question}
+        </question>
+
+        the output must follow the following format:
+
+        ```sql
+        ```
+
+        </s></INST>
+        """)
 
     postgre_pass =  os.getenv('POSTGRE_PASSWORD', None)
     if postgre_pass:
@@ -148,13 +165,18 @@ def custom_database_chain(llm, conn):
 
     final_chain = PromptTemplate.from_template("<s><INST>Generate final response from the following Question and answer\n\n<question>\n{question}\n</question>\n\n<answer>\n{answer}\n</answer>\n\n\nFinal Response:\n\n</INST></s>") | llm
 
-    chain = RunnablePassthrough.assign(columns = col_to_str, unique= unique_to_str) | {"answer" : prompt | llm | RunnableLambda(lambda x:sqlparser(x, cur)), "question":lambda x:x['question']} | final_chain
+    chain_table_search = RunnablePassthrough.assign(columns = col_to_str, unique= unique_to_str)
+
+    if ticket_submission_only:
+        chain = {"answer" : prompt | llm | RunnableLambda(lambda x:sqlparser(x, cur)), "question":lambda x:x['question']} | final_chain
+    else:
+        chain = chain_table_search | {"answer" : prompt | llm | RunnableLambda(lambda x:sqlparser(x, cur)), "question":lambda x:x['question']} | final_chain
 
     return chain
 
 
 
-def custom_combined_chain(llm, df_chain, memory_chain, conn,):
+def custom_combined_chain(llm, df_chain, memory_chain, conn, ticket_submission_only=False):
 
     # prompt = PromptTemplate.from_template("""<s><INST> Given the following question, classify it as either being more relevant with a dataframe object of ticket submissions' history or several documents of user guide and general knowledge:
 
@@ -170,7 +192,7 @@ def custom_combined_chain(llm, df_chain, memory_chain, conn,):
 
     prompt = PromptTemplate.from_template("""<s><INST> You have access to the following data sources:
     1. Dataframe : use this data source to retrieve anything about ticket submission history
-    2. Documents : use this data source to retrieve anything related to user guide and work instruction
+    2. Documents : use this data source to retrieve anything related to user guide and work instruction or any other question not related to ticket submission history
     
     <question>
     {question}
@@ -221,7 +243,11 @@ def custom_combined_chain(llm, df_chain, memory_chain, conn,):
 
         return prompt_table | llm
 
-    return RunnablePassthrough.assign(topic=prompt | llm) | RunnableBranch( (lambda x: "dataframe" in x['topic'].lower(), RunnablePassthrough.assign(table_name=lambda x: table_chain(x)) | df_chain), memory_chain )
+    if ticket_submission_only:
+        return RunnablePassthrough.assign(topic=prompt | llm) | RunnableBranch( (lambda x: "dataframe" in x['topic'].lower(), RunnablePassthrough.assign(table_name=lambda x: table_chain(x)) | df_chain), memory_chain )
+    else:
+        return RunnablePassthrough.assign(topic=prompt | llm) | RunnableBranch( (lambda x: "dataframe" in x['topic'].lower(), df_chain), memory_chain )
+
 
 
 
